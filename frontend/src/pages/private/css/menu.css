@@ -1,0 +1,100 @@
+@import url('https://fonts.googleapis.com/css2?family=Quicksand&display=swap');
+
+/* VARIABLES */
+:root {
+    --blanco: #FFFFFF;
+    --azul-opacidad: #00ADEF;
+    --bg-menu: #0077C8;
+    --bg-body: #C7E1FF;
+    --hover: #00D084;
+}
+/* MENÚ */
+.menu-dashboard {
+    height: 100vh;
+    background-color: var(--bg-menu); /* Fondo con azul oscuro */
+    color: var(--blanco); /* Texto en blanco */
+    transition: width 0.3s ease; /* Transición suave */
+    display: flex;
+    flex-direction: column;
+}
+
+.menu-dashboard.menu-closed {
+    width: 50px; /* Ancho reducido cuando el menú está cerrado */
+}
+
+/* Ocultar el nombre del usuario cuando el menú esté cerrado */
+.menu-dashboard.menu-closed .username {
+    display: none; /* Oculta el nombre del usuario */
+}
+
+/* Mostrar el nombre del usuario cuando el menú esté abierto */
+.menu-dashboard:not(.menu-closed) .username {
+    display: block; /* Muestra el nombre */
+}
+
+.username {
+    margin-top: 10px;
+    font-size: 18px;
+    font-weight: bold;
+    text-align: center;
+    color: #333;
+}
+
+.top-menu {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+}
+
+/* Logo - Configuración */
+.logo img {
+    height: 140px; /* Tamaño del logo */
+    transition: opacity 0.1s ease, width 0.1s ease; /* Animaciones suaves */
+}
+
+/* Ocultar el logo cuando el menú esté cerrado */
+.menu-dashboard.menu-closed .logo img {
+    display: none; /* Ocultar logo */
+}
+
+/* Mostrar el logo cuando el menú esté abierto */
+.menu-dashboard:not(.menu-closed) .logo img {
+    display: block; /* Mostrar logo */
+}
+
+/* Botón del menú */
+.menu-toggle {
+    margin-left: auto;
+    cursor: pointer;
+    font-size: 24px;
+    color: var(--blanco); /* Color blanco */
+}
+
+/* CONTENEDOR DE ENLACES */
+.menu {
+    flex-grow: 1;
+    padding-top: 20px;
+}
+
+/* ENLACES DEL MENÚ */
+.menu .enlace {
+    display: flex;
+    align-items: center;
+    padding: 10px 20px;
+    cursor: pointer;
+    background-color: var(--bg-menu); /* Fondo de azul oscuro */
+    color: var(--blanco); /* Texto en blanco */
+    transition: all 0.3s ease; /* Animación suave */
+    border-radius: 8px; /* Bordes redondeados */
+}
+
+.menu .enlace:hover {
+    background-color: var(--hover); /* Hover verde claro */
+    color: var(--blanco); /* Mantener texto blanco en hover */
+}
+
+.menu .enlace i {
+    font-size: 20px;
+    margin-right: 10px;
+    color: var(--blanco); /* Íconos en blanco */
+}
