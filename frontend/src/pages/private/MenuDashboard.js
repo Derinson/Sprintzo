@@ -68,6 +68,10 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
           <i className="bx bx-user"></i>
           <span>Perfil</span>
         </div>
+        <div className="enlace" onClick={() => (window.location.href = "/pages/tablero.html")}>
+          <i className="bx bx-notepad"></i>
+          <span>Tableros</span>
+        </div>
         <div className="enlace">
           <i className="bx bx-line-chart"></i>
           <span>Analíticas</span>
