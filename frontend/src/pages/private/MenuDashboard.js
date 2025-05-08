@@ -66,11 +66,11 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
         </div>
         <div className="enlace" onClick={() => (window.location.href = "/edit-profile")}>
           <i className="bx bx-user"></i>
-          <span>Perfil</span>
+          <span>Profile</span>
         </div>
-        <div className="enlace" onClick={() => (window.location.href = "/pages/tablero.html")}>
+        <div className="enlace" onClick={() => (window.location.href = "/board")}>
           <i className="bx bx-notepad"></i>
-          <span>Tableros</span>
+          <span>Board</span>
         </div>
         <div className="enlace">
           <i className="bx bx-line-chart"></i>
