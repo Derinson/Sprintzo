@@ -6,6 +6,8 @@ import Dashboard from "./pages/private/Dashboard";
 import PrivateRoute from "./pages/private/PrivateRoute"; // Protege rutas privadas
 import Inicio from "./pages/Inicio";
 import Board from "./pages/private/Board"; // Ahora está en una ruta privada
+import Crud from "./pages/private/Crud"; // Ahora está en una ruta privada
+
 
 function App() {
   return (
@@ -29,6 +31,14 @@ function App() {
           element={
             <PrivateRoute>
               <Board />
+            </PrivateRoute>
+          }
+        />
+        <Route
+          path="/crud"
+          element={
+            <PrivateRoute>
+              <Crud />
             </PrivateRoute>
           }
         />

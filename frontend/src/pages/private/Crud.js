@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useState } from "react";
+import React, { useState } from "react";
 import "./css/crud.css";
 import MenuDashboard from "./MenuDashboard";
 
@@ -16,30 +16,24 @@ function Crud() {
       return;
     }
 
-    const newBoard = {
-      id: Date.now(),
-      name: trimmedName,
-    };
-
-    setBoards([...boards, newBoard]);
+    const newBoard = { id: Date.now(), name: trimmedName };
+    setBoards(prev => [...prev, newBoard]);
     setBoardName("");
   };
 
-  const handleEditBoard = (id) => {
-    const board = boards.find((b) => b.id === id);
+  const handleEditBoard = id => {
+    const board = boards.find(b => b.id === id);
     const newName = prompt("Enter new board name:", board.name);
     if (newName) {
-      setBoards(
-        boards.map((b) =>
-          b.id === id ? { ...b, name: newName.trim() } : b
-        )
+      setBoards(prev =>
+        prev.map(b => (b.id === id ? { ...b, name: newName.trim() } : b))
       );
     }
   };
 
-  const handleDeleteBoard = (id) => {
+  const handleDeleteBoard = id => {
     if (window.confirm("Are you sure you want to delete this board?")) {
-      setBoards(boards.filter((b) => b.id !== id));
+      setBoards(prev => prev.filter(b => b.id !== id));
     }
   };
 
@@ -50,37 +44,42 @@ function Crud() {
       <div
         className={`board-content ${menuOpen ? "menu-open" : "menu-closed"}`}
       >
-        <div className="board-creator">
-          <input
-            type="text"
-            id="board-name-input"
-            value={boardName}
-            onChange={(e) => setBoardName(e.target.value)}
-            placeholder="Enter board name"
-          />
-          <button id="create-board-btn" onClick={handleCreateBoard}>
-            Create Board
-          </button>
+        <div className="container" id="crud-container">
+          <h1>Manage Boards</h1>
+          <div className="create-board board-creator">
+            <input
+              type="text"
+              id="board-name-input"
+              value={boardName}
+              onChange={e => setBoardName(e.target.value)}
+              placeholder="New board name"
+            />
+            <button
+              id="create-board-btn"
+              onClick={handleCreateBoard}
+            >
+              Create Board
+            </button>
+          </div>
+          <ul id="board-list">
+            {boards.map(board => (
+              <li key={board.id} className="board-item">
+                <span>{board.name}</span>
+                <div className="board-actions">
+                  <button
+                    className="edit"
+                     onClick={() => (window.location.href = "/board")}
+                  >
+                    Edit
+                  </button>
+                  <button onClick={() => handleDeleteBoard(board.id)}>
+                    Delete
+                  </button>
+                </div>
+              </li>
+            ))}
+          </ul>
         </div>
-
-        <ul id="board-list">
-          {boards.map((board) => (
-            <li key={board.id} className="board-item">
-              <span>{board.name}</span>
-              <div className="board-actions">
-                <button
-                  className="edit"
-                  onClick={() => handleEditBoard(board.id)}
-                >
-                  Edit
-                </button>
-                <button onClick={() => handleDeleteBoard(board.id)}>
-                  Delete
-                </button>
-              </div>
-            </li>
-          ))}
-        </ul>
       </div>
     </div>
   );
