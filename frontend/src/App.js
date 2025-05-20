@@ -7,6 +7,7 @@ import PrivateRoute from "./pages/private/PrivateRoute"; // Protege rutas privad
 import Inicio from "./pages/Inicio";
 import Board from "./pages/private/Board"; // Ahora está en una ruta privada
 import Crud from "./pages/private/Crud"; // Ahora está en una ruta privada
+import UserProfile from "./pages/private/UserProfile";
 
 
 function App() {
@@ -42,6 +43,16 @@ function App() {
             </PrivateRoute>
           }
         />
+
+           <Route
+          path="/profile"
+          element={
+            <PrivateRoute>
+              <UserProfile />
+            </PrivateRoute>
+          }
+        />
+
       </Routes>
     </Router>
   );
