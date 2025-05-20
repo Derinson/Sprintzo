@@ -44,7 +44,7 @@ function Crud() {
       <div
         className={`board-content ${menuOpen ? "menu-open" : "menu-closed"}`}
       >
-        <div className="container" id="crud-container">
+        <div id="crud-container">
           <h1>Manage Boards</h1>
           <div className="create-board board-creator">
             <input
