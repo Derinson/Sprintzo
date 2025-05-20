@@ -1,0 +1,106 @@
+/* Variables de color */
+:root {
+    --blanco: #FFFFFF;
+    --azul-opacidad: #00ADEF;
+    --bg-menu: #0077C8;
+    --bg-body: #C7E1FF;
+    --hover: #00D084;
+}
+
+/* Estilos generales */
+body {
+    background-color: var(--bg-body);
+    margin: 0;
+}
+
+/* Contenedor principal */
+.profile-wrapper {
+    display: flex;
+}
+
+
+
+/* Contenido del perfil alineado a la derecha */
+.profile-content {
+    flex-grow: 1;
+    margin-left: 250px;
+    transition: margin-left 0.3s ease; /* Transición suave */
+    padding: 20px;
+    display: flex;
+    justify-content: center; /* Mantiene el contenido centrado */
+    align-items: center;
+}
+
+.profile-content.menu-closed {
+    margin-left: 60px; /* Margen ajustado cuando el menú está cerrado */
+}
+
+/* Tarjeta del perfil */
+.profile-container {
+    background-color: var(--blanco);
+    padding: 40px;
+    border-radius: 12px;
+    width: 500px; /* Asegura espacio adecuado */
+    box-shadow: 0px 8px 16px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Estilos del título */
+h2 {
+    color: var(--bg-menu);
+    margin-bottom: 20px;
+    font-size: 24px;
+}
+
+/* Mensajes de error y éxito */
+.error-message {
+    color: red;
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+.success-message {
+    color: var(--hover);
+    font-size: 14px;
+    margin-bottom: 10px;
+}
+
+/* Estilos del formulario */
+.form-group {
+    margin-bottom: 25px;
+    text-align: left;
+}
+
+/* Inputs más largos y espaciosos */
+label {
+    display: block;
+    font-size: 15px;
+    color: var(--bg-menu);
+    margin-bottom: 5px;
+}
+
+input {
+    width: 100%;
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    background-color: #f5f5f5;
+    font-size: 16px;
+}
+
+/* Botón más grande */
+.btn-submit {
+    background-color: var(--azul-opacidad);
+    color: var(--blanco);
+    padding: 14px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    width: 100%;
+    font-size: 18px;
+    transition: background 0.3s ease;
+}
+
+.btn-submit:hover {
+    background-color: var(--hover);
+}
