@@ -1,26 +1,23 @@
-
-const express = require('express');
-const cors = require('cors');
-const connectDB = require('./config/db');
-const authUser = require('./routes/userRoutes');
+const express = require("express");
+const cors = require("cors");
+const connectDB = require("./config/db");
+const authUser = require("./routes/userRoutes");
+const tablerosRoutes = require("./routes/tablerosRoutes");
 
 const app = express();
 
 // Conectar a MongoDB
 connectDB();
 
-
-// Middlewares
+// Middleware
 app.use(cors());
 app.use(express.json());
-app.use(express.urlencoded({ extended: true })); // Opcional, para formularios codificados en URL
 
 // Rutas
-app.use('/userRoutes', authUser);
-
-
+app.use("/userRoutes", authUser); // Ruta de usuarios sigue igual
+app.use("/tablerosRoutes", tablerosRoutes); // Ruta de tableros con autenticación
 
 const PORT = 5000;
 app.listen(PORT, () => {
-  console.log(`Servidor corriendo en http://localhost:${PORT}`);
+  console.log(`✅ Servidor corriendo en http://localhost:${PORT}`);
 });
