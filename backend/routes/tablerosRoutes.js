@@ -4,7 +4,7 @@ const Tablero = require("../models/Tablero");
 const User = require("../models/userModel");
 const router = express.Router();
 
-// 📌 **Middleware para validar el token**
+// 📌 Middleware de autenticación
 const verifyToken = (req, res, next) => {
   const token = req.headers.authorization?.split(" ")[1];
   if (!token) return res.status(401).json({ message: "🚨 No hay token de autenticación" });
@@ -18,11 +18,44 @@ const verifyToken = (req, res, next) => {
   }
 };
 
-// 📌 **Crear un tablero asignado al usuario autenticado**
+// 📌 Eliminar un tablero creado por el usuario autenticado
+router.delete("/:id", verifyToken, async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    // Buscar el tablero por ID
+    const tablero = await Tablero.findById(id);
+    if (!tablero) return res.status(404).json({ message: "🚨 Tablero no encontrado" });
+
+    // Verificar que el usuario autenticado sea el creador del tablero
+    if (tablero.creadoPor.toString() !== req.user.id) {
+      return res.status(403).json({ message: "🚨 No tienes permiso para eliminar este tablero" });
+    }
+
+    // Eliminar el tablero
+    await Tablero.findByIdAndDelete(id);
+    res.json({ message: "✅ Tablero eliminado exitosamente" });
+  } catch (error) {
+    res.status(500).json({ message: "🚨 Error al eliminar el tablero", error });
+  }
+});
+
+
+// 📌 Obtener los tableros creados por el usuario autenticado
+router.get("/", verifyToken, async (req, res) => {
+  try {
+    const tableros = await Tablero.find({ creadoPor: req.user.id });
+    res.status(200).json(tableros);
+  } catch (error) {
+    res.status(500).json({ message: "🚨 Error al obtener tus tableros", error });
+  }
+});
+
+// 📌 Crear tablero
 router.post("/", verifyToken, async (req, res) => {
   try {
     const { nombre } = req.body;
-    if (!nombre) return res.status(400).json({ message: "🚨 El nombre del tablero es obligatorio." });
+    if (!nombre) return res.status(400).json({ message: "🚨 El nombre es obligatorio." });
 
     const nuevoTablero = new Tablero({
       nombre,
@@ -31,41 +64,30 @@ router.post("/", verifyToken, async (req, res) => {
     });
 
     await nuevoTablero.save();
-    res.status(201).json({ message: "✅ Tablero creado exitosamente", tablero: nuevoTablero });
+    res.status(201).json({ message: "✅ Tablero creado", tablero: nuevoTablero });
   } catch (error) {
     res.status(500).json({ message: "🚨 Error al crear el tablero", error });
   }
 });
 
-// 📌 **Añadir contribuyente con validación de existencia**
+// 📌 Agregar contribuyente
 router.post("/contribuyente/:id", verifyToken, async (req, res) => {
   try {
     const { id } = req.params;
     const { email, rol } = req.body;
 
-    if (!["lectura", "edicion"].includes(rol)) {
-      return res.status(400).json({ message: "🚨 Rol inválido. Debe ser 'lectura' o 'edicion'" });
-    }
-
     const tablero = await Tablero.findById(id);
     if (!tablero) return res.status(404).json({ message: "🚨 Tablero no encontrado" });
-
-    if (tablero.creadoPor.toString() !== req.user.id) {
-      return res.status(403).json({ message: "🚨 No tienes permiso para agregar contribuyentes" });
-    }
 
     const usuario = await User.findOne({ email });
     if (!usuario) return res.status(404).json({ message: "🚨 Usuario no encontrado" });
 
-    // 📌 Verificar si el usuario ya está contribuyendo
-    if (tablero.contribuyentes.some(c => c.usuario.toString() === usuario._id.toString())) {
-      return res.status(400).json({ message: "🚨 Este usuario ya está contribuyendo en el tablero" });
+    // 📌 Verificación para evitar duplicados
+    if (tablero.contribuyentes.some(c => c.email === email)) {
+      return res.status(400).json({ message: "🚨 Este usuario ya es contribuyente." });
     }
 
-    // Si el usuario no está, agregarlo
-    
-    // 📌 Se guarda el correo junto con el usuario y el rol
-    tablero.contribuyentes.push({ email, usuario: req.user.id, rol });
+    tablero.contribuyentes.push({ email, usuario: usuario._id, rol });
     await tablero.save();
 
     res.json({ message: `✅ Contribuyente ${email} agregado con rol ${rol}`, tablero });
@@ -74,6 +96,15 @@ router.post("/contribuyente/:id", verifyToken, async (req, res) => {
   }
 });
 
+// 📌 Obtener tableros compartidos con el usuario
+router.get("/compartidos", verifyToken, async (req, res) => {
+  try {
+    const tableros = await Tablero.find({ "contribuyentes.usuario": req.user.id });
+    res.status(200).json(tableros);
+  } catch (error) {
+    res.status(500).json({ message: "🚨 Error al obtener tableros compartidos", error });
+  }
+});
 
 router.put("/:id", verifyToken, async (req, res) => {
   try {
@@ -109,51 +140,5 @@ router.put("/:id", verifyToken, async (req, res) => {
     res.status(500).json({ message: "🚨 Error al actualizar el tablero", error });
   }
 });
-
-
-
-// 📌 **Obtener tableros creados por el usuario autenticado**
-router.get("/", verifyToken, async (req, res) => {
-  try {
-    const tableros = await Tablero.find({ creadoPor: req.user.id });
-    res.status(200).json(tableros);
-  } catch (error) {
-    res.status(500).json({ message: "🚨 Error al obtener los tableros", error });
-  }
-});
-
-// 📌 **Obtener tableros compartidos con el usuario autenticado**
-router.get("/compartidos", verifyToken, async (req, res) => {
-  try {
-    const tableros = await Tablero.find({ "contribuyentes.usuario": req.user.id });
-    res.status(200).json(tableros);
-  } catch (error) {
-    res.status(500).json({ message: "🚨 Error al obtener tableros compartidos", error });
-  }
-});
-
-// 📌 **Eliminar un tablero**
-router.delete("/:id", verifyToken, async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    // Buscar el tablero por ID
-    const tablero = await Tablero.findById(id);
-    if (!tablero) return res.status(404).json({ message: "🚨 Tablero no encontrado" });
-
-    // Verificar que el usuario autenticado sea el creador del tablero
-    if (tablero.creadoPor.toString() !== req.user.id) {
-      return res.status(403).json({ message: "🚨 No tienes permiso para eliminar este tablero" });
-    }
-
-    // Eliminar el tablero
-    await Tablero.findByIdAndDelete(id);
-    res.json({ message: "✅ Tablero eliminado exitosamente" });
-  } catch (error) {
-    res.status(500).json({ message: "🚨 Error al eliminar el tablero", error });
-  }
-});
-
-
 
 module.exports = router;
