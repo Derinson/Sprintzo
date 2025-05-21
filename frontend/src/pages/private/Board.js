@@ -9,31 +9,36 @@ function Board() {
     setMenuOpen(!menuOpen); // Alterna entre abierto/cerrado
   };
 
-  useEffect(() => {
-    fetch("/pages/board.html") // Cargar el HTML
-      .then((response) => response.text())
-      .then((html) => {
-        document.getElementById("board-container").innerHTML = html;
+useEffect(() => {
+  fetch("/pages/board.html")
+    .then((response) => response.text())
+    .then((html) => {
+      document.getElementById("board-container").innerHTML = html;
 
-        // Obtener elementos del DOM
-        const addTaskBtn = document.querySelector("#add-task-btn");
-        const addColumnBtn = document.querySelector("#add-column-btn");
+      const addTaskBtn = document.querySelector("#add-task-btn");
+      const addColumnBtn = document.querySelector("#add-column-btn");
 
-        if (addTaskBtn && addColumnBtn) {
-          addTaskBtn.addEventListener("click", addTask);
-          addColumnBtn.addEventListener("click", addColumn);
-        } else {
-          console.error("Buttons not found in the loaded HTML.");
-        }
-      })
-      .catch((error) => {
-        console.error("Error loading board.html:", error);
-      });
-  }, []);
+      if (addTaskBtn && addColumnBtn) {
+        addTaskBtn.addEventListener("click", addTask);
+        addColumnBtn.addEventListener("click", addColumn);
+      } else {
+        console.error("Buttons not found in the loaded HTML.");
+      }
 
+      // Cargar las tareas desde la base de datos
+      fetch("http://localhost:5000/api/cards")
+        .then(res => res.json())
+        .then(cards => {
+          clearAllTasks(); // LIMPIAR primero para evitar duplicados
+          cards.forEach(renderCard); // Renderizar una vez por tarjeta
+        });
+    })
+    .catch((error) => {
+      console.error("Error loading board.html:", error);
+    });
+}, []);
   /////
-
-  function addTask() {
+function addTask() {
   const responsible = prompt("Enter the name of the responsible person:");
   if (!responsible) return;
 
@@ -41,23 +46,9 @@ function Board() {
   if (!description) return;
 
   const columnChoice = prompt("Enter the column name (e.g. todo, doing, done, or custom):").toLowerCase();
+  if (!columnChoice) return;
 
-  const container = document.getElementById(`${columnChoice}-tasks`);
-  if (!container) {
-    alert("Column not found. Please try again.");
-    return;
-  }
-
-  // Mostrar la tarjeta en el frontend
-  const card = document.createElement("div");
-  card.className = "task-card";
-  card.innerHTML = `
-    <p class="responsible">👤 ${responsible}</p>
-    <p>${description}</p>
-  `;
-  container.appendChild(card);
-
-  // Enviar al backend
+  // Enviar al backend (ya no mostramos directamente la tarjeta aquí)
   fetch("http://localhost:5000/api/cards", {
     method: "POST",
     headers: {
@@ -69,17 +60,49 @@ function Board() {
       column: columnChoice
     })
   })
-  .then(res => {
-    if (!res.ok) throw new Error("Error al guardar la tarjeta");
-    return res.json();
-  })
-  .then(data => {
-    console.log("Card saved:", data);
-  })
-  .catch(err => {
-    console.error(err);
-    alert("No se pudo guardar la tarea en la base de datos");
-  });
+    .then(res => {
+      if (!res.ok) throw new Error("Error al guardar la tarjeta");
+      return res.json();
+    })
+    .then(data => {
+      console.log("Card saved:", data);
+      // Opcional: volver a cargar las tarjetas desde la DB para asegurarnos
+      fetch("http://localhost:5000/api/cards")
+        .then(res => res.json())
+        .then(cards => {
+          // Limpiar primero
+          clearAllTasks();
+          cards.forEach(renderCard);
+        });
+    })
+    .catch(err => {
+      console.error(err);
+      alert("No se pudo guardar la tarea en la base de datos");
+    });
+}
+
+  /////
+  function renderCard(card) {
+  const container = document.getElementById(`${card.column}-tasks`);
+  if (!container) {
+    console.warn(`Column ${card.column} not found`);
+    return;
+  }
+
+  const div = document.createElement("div");
+  div.className = "task-card";
+  div.innerHTML = `
+    <p class="responsible">👤 ${card.responsible}</p>
+    <p>${card.description}</p>
+  `;
+  container.appendChild(div);
+}
+
+
+  /////
+function clearAllTasks() {
+  const containers = document.querySelectorAll(".task-container");
+  containers.forEach(container => container.innerHTML = "");
 }
 
   /////
