@@ -30,4 +30,15 @@ router.get('/', async (req, res) => {
   }
 });
 
+// Eliminar una tarjeta
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedCard = await Card.findByIdAndDelete(req.params.id);
+    if (!deletedCard) return res.status(404).json({ error: 'Card not found' });
+    res.json({ message: 'Card deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting card' });
+  }
+});
+
 module.exports = router;
