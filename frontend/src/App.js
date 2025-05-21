@@ -28,7 +28,7 @@ function App() {
           }
         />
         <Route
-          path="/board"
+          path="/board/:id"
           element={
             <PrivateRoute>
               <Board />

@@ -64,9 +64,9 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
 
   const crearTablero = async () => {
     const { value: nombre } = await Swal.fire({
-      title: "Crear Tablero",
+      title: "Create Board",
       input: "text",
-      inputPlaceholder: "Nombre del tablero",
+      inputPlaceholder: "Board name",
       showCancelButton: true,
       customClass: {
         confirmButton: "swal-button-confirm",
@@ -89,7 +89,7 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
       const data = await response.json();
       if (response.ok) {
         setTableros([...tableros, data.tablero]);
-        Swal.fire("✅ Tablero creado!", "", "success");
+        Swal.fire("✅ Board created!", "", "success");
       } else {
         Swal.fire("🚨 Error", data.message, "error");
       }
@@ -106,24 +106,24 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
 
     if (response.ok) {
       setTableros(tableros.filter((tablero) => tablero._id !== id));
-      Swal.fire("✅ Tablero eliminado!", "", "success");
+      Swal.fire("✅ Board deleted!", "", "success");
     }
   };
 
   const agregarContribuyente = async (id) => {
     const { value: email } = await Swal.fire({
-      title: "Añadir Contribuyente",
+      title: "Add Contributor",
       input: "email",
-      inputPlaceholder: "Introduce el correo",
+      inputPlaceholder: "Enter the email",
       showCancelButton: true,
     });
 
     if (!email) return;
 
     const { value: rol } = await Swal.fire({
-      title: "Selecciona el rol",
+      title: "Select the role",
       input: "select",
-      inputOptions: { lectura: "Lectura", edicion: "Edición" },
+      inputOptions: { reading: "Reading", edition: "Edition" },
       showCancelButton: true,
     });
 
@@ -143,7 +143,7 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
     const data = await response.json();
     if (response.ok) {
       Swal.fire({
-        title: `✅ Contribuyente ${email} agregado con rol ${rol}`,
+        title: `✅ Taxpayer ${email} added with role ${rol}`,
         icon: "success",
         confirmButtonText: "Ok",
       }).then(() => {
@@ -156,26 +156,26 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
 
 const editarTablero = async (id, nombreActual, contribuyentes) => {
   const { value: formValues } = await Swal.fire({
-    title: "Editar Tablero",
+    title: "Edit Board",
     html: `
-      <label>Nuevo Nombre para el Tablero:</label>
+      <label>New Name for the Board:</label>
       <input id="swal-input-nombre" class="swal2-input" value="${nombreActual}">
-      <label>Selecciona un contribuyente:</label>
+      <label>Select a taxpayer:</label>
       <select id="swal-input-contribuyente" class="swal2-select">
         ${contribuyentes.map(contribuyente => 
           `<option value="${contribuyente.email}">${contribuyente.email} - ${contribuyente.rol}</option>`
         ).join("")}
       </select>
-      <label>Nuevo Rol:</label>
+      <label>New Role:</label>
       <select id="swal-input-rol" class="swal2-select">
-        <option value="lectura">Lectura</option>
-        <option value="edicion">Edición</option>
+        <option value="reading">Reading</option>
+        <option value="edition">Edition</option>
       </select>
     `,
     focusConfirm: false,
     showCancelButton: true,
-    confirmButtonText: "Guardar cambios",
-    cancelButtonText: "Cancelar",
+    confirmButtonText: "Save changes",
+    cancelButtonText: "Cancel",
     preConfirm: () => {
       return {
         nuevoNombre: document.getElementById("swal-input-nombre").value,
@@ -214,7 +214,7 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
         : tablero
     ));
     Swal.fire({
-      title: "✅ Tablero actualizado!",
+      title: "✅ Updated board!",
       icon: "success",
       confirmButtonText: "Ok",
     }).then(() => {
@@ -226,7 +226,7 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
 };
 
  const abrirTablero = (id) => {
-    window.location.href = `/Board/${id}`;
+    window.location.href = `/board/${id}`;
   };
 
 
@@ -234,8 +234,9 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
  <div className="dashboard-wrapper">
       <MenuDashboard handleLogout={handleLogout} toggleMenu={toggleMenu} menuOpen={menuOpen} />
       <div className={`dashboard-content ${menuOpen ? "menu-open" : "menu-closed"}`}>
-        <h2>Mis Tableros</h2>
-        <button onClick={crearTablero}>Crear Tablero</button>
+       <button onClick={crearTablero} className="crear">Create Board</button>
+        <h2>My Boards</h2>
+        
         <div className="tableros">
           {tableros.map((tablero) => (
             <div key={tablero._id} className="tablero">
@@ -263,23 +264,23 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
 
               {dropdownOpen === tablero._id && (
                 <div className="dropdown-menu" style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}>
-                  <button onClick={() => editarTablero(tablero._id, tablero.nombre, tablero.contribuyentes)}>Editar</button>
-                  <button onClick={() => eliminarTablero(tablero._id)}>Eliminar</button>
-                  <button onClick={() => agregarContribuyente(tablero._id)}>Añadir contribuyente</button>
+                  <button onClick={() => editarTablero(tablero._id, tablero.nombre, tablero.contribuyentes)}>Edit</button>
+                  <button onClick={() => eliminarTablero(tablero._id)}>Delete</button>
+                  <button onClick={() => agregarContribuyente(tablero._id)}>Add taxpayer</button>
                 </div>
               )}
 
-              <button onClick={() => abrirTablero(tablero._id)}>Abrir</button>
+              <button onClick={() => abrirTablero(tablero._id)}>Open</button>
             </div>
           ))}
         </div>
 
-        <h2>Tableros compartidos conmigo</h2>
+        <h2>Shared boards with me</h2>
         <div className="tableros">
           {tablerosCompartidos.map((tablero) => (
             <div key={tablero._id} className="tablero">
               <h3>{tablero.nombre} <span className="contador">({tablero.contribuyentes.length})</span></h3>
-              <button onClick={() => abrirTablero(tablero._id)}>Abrir</button>
+              <button onClick={() => abrirTablero(tablero._id)}>Open</button>
             </div>
           ))}
         </div>

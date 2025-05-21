@@ -6,7 +6,7 @@ const tableroSchema = new mongoose.Schema({
   contribuyentes: [{ 
     usuario: { type: mongoose.Schema.Types.ObjectId, ref: "User" }, 
     email: { type: String, required: true }, // 📌 Se añade el correo
-    rol: { type: String, enum: ["lectura", "edicion"], required: true } 
+    rol: { type: String, enum: ["reading", "edition"], required: true } 
   }],
   createdAt: { type: Date, default: Date.now },
 });
