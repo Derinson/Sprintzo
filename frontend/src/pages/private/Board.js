@@ -122,7 +122,6 @@ function addTask() {
     console.error(err);
     alert("No se pudo eliminar la tarjeta");
   });
-
     }
   });
 
