@@ -3,6 +3,7 @@ const express = require('express');
 const cors = require('cors');
 const connectDB = require('./config/db');
 const authUser = require('./routes/userRoutes');
+const cardRoutes = require('./routes/cardRoutes');
 
 const app = express();
 
@@ -17,7 +18,7 @@ app.use(express.urlencoded({ extended: true })); // Opcional, para formularios c
 
 // Rutas
 app.use('/userRoutes', authUser);
-
+app.use('/api/cards', cardRoutes);
 
 
 const PORT = 5000;
