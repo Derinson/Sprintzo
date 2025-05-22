@@ -45,10 +45,9 @@ function addTask() {
   const description = prompt("Enter the task description:");
   if (!description) return;
 
-  const columnChoice = prompt("Enter the column name (e.g. todo, doing, done, or custom):").toLowerCase();
-  if (!columnChoice) return;
+  const columnChoice = "todo"; // Ahora todas las tareas se crearán en "todo"
 
-  // Enviar al backend (ya no mostramos directamente la tarjeta aquí)
+  // Enviar al backend
   fetch("http://localhost:5000/api/cards", {
     method: "POST",
     headers: {
@@ -81,6 +80,7 @@ function addTask() {
     });
 }
 
+
   /////
   function renderCard(card) {
   const container = document.getElementById(`${card.column}-tasks`);
@@ -91,22 +91,93 @@ function addTask() {
 
   const div = document.createElement("div");
   div.className = "task-card";
+
+  const editBtn = document.createElement("button");
+  editBtn.textContent = "✏ Editar";
+  editBtn.className = "edit-btn";
+
+  // ✅ Nuevo botón Eliminar
+  const deleteBtn = document.createElement("button");
+  deleteBtn.textContent = "🗑 Eliminar";
+  deleteBtn.className = "delete-btn";
+
+  // ✅ Acción para eliminar tarjeta
+  deleteBtn.addEventListener("click", () => {
+    if (window.confirm("¿Estás seguro de que quieres eliminar esta tarjeta?")) {
+      fetch(`http://localhost:5000/api/cards/${card._id}`, {
+  method: "DELETE",
+})
+  .then(async res => {
+    if (!res.ok) {
+      const errorText = await res.text();
+      console.error("Respuesta con error:", res.status, errorText);
+      throw new Error("Error al eliminar la tarjeta");
+    }
+    return res.json();
+  })
+  .then(() => {
+    div.remove(); // Eliminar del DOM si fue exitoso
+  })
+  .catch(err => {
+    console.error(err);
+    alert("No se pudo eliminar la tarjeta");
+  });
+    }
+  });
+
+  editBtn.addEventListener("click", () => {
+    const newResponsible = prompt("Nuevo responsable:", card.responsible);
+    if (!newResponsible) return;
+
+    const newDescription = prompt("Nueva descripción:", card.description);
+    if (!newDescription) return;
+
+    fetch(`http://localhost:5000/api/cards/${card._id}`, {
+      method: "PUT",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        responsible: newResponsible,
+        description: newDescription,
+        column: card.column
+      })
+    })
+      .then(res => {
+        if (!res.ok) throw new Error("Error al editar la tarjeta");
+        return res.json();
+      })
+      .then(updatedCard => {
+        fetch("http://localhost:5000/api/cards")
+          .then(res => res.json())
+          .then(cards => {
+            clearAllTasks();
+            cards.forEach(renderCard);
+          });
+      })
+      .catch(err => {
+        console.error(err);
+        alert("No se pudo editar la tarjeta");
+      });
+  });
+
   div.innerHTML = `
     <p class="responsible">👤 ${card.responsible}</p>
     <p>${card.description}</p>
   `;
+
+  div.appendChild(editBtn);
+  div.appendChild(deleteBtn); // ✅ Agrega el botón de eliminar
   container.appendChild(div);
 }
 
-
-  /////
+/////
 function clearAllTasks() {
   const containers = document.querySelectorAll(".task-container");
   containers.forEach(container => container.innerHTML = "");
 }
 
-  /////
-
+/////
   function addColumn() {
     const columnName = prompt("Enter the name for the new column:").toLowerCase().trim();
     if (!columnName) return;
