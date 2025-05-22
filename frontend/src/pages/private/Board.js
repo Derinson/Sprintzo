@@ -45,10 +45,9 @@ function addTask() {
   const description = prompt("Enter the task description:");
   if (!description) return;
 
-  const columnChoice = prompt("Enter the column name (e.g. todo, doing, done, or custom):").toLowerCase();
-  if (!columnChoice) return;
+  const columnChoice = "todo"; // Ahora todas las tareas se crearán en "todo"
 
-  // Enviar al backend (ya no mostramos directamente la tarjeta aquí)
+  // Enviar al backend
   fetch("http://localhost:5000/api/cards", {
     method: "POST",
     headers: {
@@ -81,6 +80,7 @@ function addTask() {
     });
 }
 
+
   /////
   function renderCard(card) {
   const container = document.getElementById(`${card.column}-tasks`);
@@ -93,11 +93,13 @@ function addTask() {
   div.className = "task-card";
 
   const editBtn = document.createElement("button");
+
   editBtn.textContent = "✏️ Editar";
   editBtn.className = "edit-btn";
 
   // ✅ Nuevo botón Eliminar
   const deleteBtn = document.createElement("button");
+
   deleteBtn.textContent = "🗑️ Eliminar";
   deleteBtn.className = "delete-btn";
 
