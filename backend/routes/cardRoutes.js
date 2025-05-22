@@ -19,6 +19,21 @@ router.post('/', async (req, res) => {
   }
 });
 
+// Actualizar una tarjeta
+router.put('/:id', async (req, res) => {
+  const { responsible, description, column } = req.body;
+  try {
+    const updatedCard = await Card.findByIdAndUpdate(
+      req.params.id,
+      { responsible, description, column },
+      { new: true }
+    );
+    if (!updatedCard) return res.status(404).json({ error: 'Card not found' });
+    res.json(updatedCard);
+  } catch (error) {
+    res.status(500).json({ error: 'Error updating card' });
+  }
+});
 
 // (Opcional) Obtener todas las tarjetas
 router.get('/', async (req, res) => {
@@ -27,6 +42,17 @@ router.get('/', async (req, res) => {
     res.status(200).json(cards);
   } catch (error) {
     res.status(500).json({ error: 'Error fetching cards' });
+  }
+});
+
+// Eliminar una tarjeta
+router.delete('/:id', async (req, res) => {
+  try {
+    const deletedCard = await Card.findByIdAndDelete(req.params.id);
+    if (!deletedCard) return res.status(404).json({ error: 'Card not found' });
+    res.json({ message: 'Card deleted successfully' });
+  } catch (error) {
+    res.status(500).json({ error: 'Error deleting card' });
   }
 });
 

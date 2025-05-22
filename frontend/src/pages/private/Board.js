@@ -93,12 +93,14 @@ function addTask() {
   div.className = "task-card";
 
   const editBtn = document.createElement("button");
-  editBtn.textContent = "✏ Editar";
+
+  editBtn.textContent = "✏️ Editar";
   editBtn.className = "edit-btn";
 
   // ✅ Nuevo botón Eliminar
   const deleteBtn = document.createElement("button");
-  deleteBtn.textContent = "🗑 Eliminar";
+
+  deleteBtn.textContent = "🗑️ Eliminar";
   deleteBtn.className = "delete-btn";
 
   // ✅ Acción para eliminar tarjeta
