@@ -96,19 +96,7 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
     }
   };
 
-  const eliminarTablero = async (id) => {
-    const token = localStorage.getItem("token");
-
-    const response = await fetch(`http://localhost:5000/tablerosRoutes/${id}`, {
-      method: "DELETE",
-      headers: { "Authorization": `Bearer ${token}` },
-    });
-
-    if (response.ok) {
-      setTableros(tableros.filter((tablero) => tablero._id !== id));
-      Swal.fire("✅ Board deleted!", "", "success");
-    }
-  };
+ 
 
   const agregarContribuyente = async (id) => {
     const { value: email } = await Swal.fire({
@@ -265,7 +253,7 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
               {dropdownOpen === tablero._id && (
                 <div className="dropdown-menu" style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}>
                   <button onClick={() => editarTablero(tablero._id, tablero.nombre, tablero.contribuyentes)}>Edit</button>
-                  <button onClick={() => eliminarTablero(tablero._id)}>Delete</button>
+                  <button>Delete</button>
                   <button onClick={() => agregarContribuyente(tablero._id)}>Add taxpayer</button>
                 </div>
               )}
