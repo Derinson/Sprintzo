@@ -24,10 +24,7 @@ function Board() {
           addColumnBtn.addEventListener("click", addColumn);
         } else {
           console.error("Buttons not found in the loaded HTML.");
-        }
-function addColumn() {
-  Swal.fire("Función no implementada aún", "", "info");
-}
+      }
 
         // Cargar las tareas desde la base de datos
         fetch("http://localhost:5000/api/cards")
@@ -35,6 +32,42 @@ function addColumn() {
           .then(cards => {
             clearAllTasks(); // LIMPIAR primero para evitar duplicados
             cards.forEach(renderCard); // Renderizar una vez por tarjeta
+            const containers = document.querySelectorAll(".task-container");
+            containers.forEach(container => {
+              container.addEventListener("dragover", (e) => {
+                e.preventDefault(); // Necesario para permitir drop
+              });
+
+              container.addEventListener("drop", (e) => {
+                e.preventDefault();
+                const cardId = e.dataTransfer.getData("text/plain");
+                const newColumn = container.id.replace("-tasks", "");
+
+                fetch(`http://localhost:5000/api/cards/${cardId}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({ column: newColumn })
+                })
+                  .then(res => {
+                    if (!res.ok) throw new Error("Error al mover la tarjeta");
+                    return res.json();
+                  })
+                  .then(() => {
+                    fetch("http://localhost:5000/api/cards")
+                      .then(res => res.json())
+                      .then(cards => {
+                        clearAllTasks();
+                        cards.forEach(renderCard);
+                      });
+                  })
+                  .catch(err => {
+                    console.error(err);
+                    alert("No se pudo mover la tarjeta");
+                  });
+              });
+            });
           });
       })
       .catch((error) => {
@@ -42,6 +75,9 @@ function addColumn() {
       });
   }, []);
 
+  function addColumn() {
+    Swal.fire("Función no implementada aún", "", "info");
+  }
   function addTask() {
     Swal.fire({
       title: "Nuevo Responsable",
@@ -102,6 +138,13 @@ function addColumn() {
 
     const div = document.createElement("div");
     div.className = "task-card";
+    div.setAttribute("draggable", true);
+    div.dataset.id = card._id;
+
+    // Eventos para drag
+    div.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", card._id);
+    });
 
     const editBtn = document.createElement("button");
     editBtn.textContent = "✏️ Editar";
