@@ -92,21 +92,21 @@
 }
 
 .edit-btn {
-  background-color: #3b82f6; /* azul */
+  background-color: #0077C8; /* azul */
   color: white;
 }
 
 .edit-btn:hover {
-  background-color: #2563eb;
+  background-color: #00ADEF;
 }
 
 .delete-btn {
-  background-color: #ef4444; /* rojo */
+  background-color: #00D084; 
   color: white;
 }
 
 .delete-btn:hover {
-  background-color: #dc2626;
+  background-color: #383522;
 }
 
 /* Columnas */
