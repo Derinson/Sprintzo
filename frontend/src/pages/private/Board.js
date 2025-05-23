@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from "react";
 import "./css/board.css";
 import MenuDashboard from "./MenuDashboard"; // Importamos el menú
+import Swal from "sweetalert2"; // Importamos SweetAlert
 
 function Board() {
   const [menuOpen, setMenuOpen] = useState(true); // Estado para controlar el menú
@@ -10,12 +11,11 @@ function Board() {
   };
 
   useEffect(() => {
-    fetch("/pages/board.html") // Cargar el HTML
+    fetch("/pages/board.html")
       .then((response) => response.text())
       .then((html) => {
         document.getElementById("board-container").innerHTML = html;
 
-        // Obtener elementos del DOM
         const addTaskBtn = document.querySelector("#add-task-btn");
         const addColumnBtn = document.querySelector("#add-column-btn");
 
@@ -24,63 +24,230 @@ function Board() {
           addColumnBtn.addEventListener("click", addColumn);
         } else {
           console.error("Buttons not found in the loaded HTML.");
-        }
+      }
+
+        // Cargar las tareas desde la base de datos
+        fetch("http://localhost:5000/api/cards")
+          .then(res => res.json())
+          .then(cards => {
+            clearAllTasks(); // LIMPIAR primero para evitar duplicados
+            cards.forEach(renderCard); // Renderizar una vez por tarjeta
+            const containers = document.querySelectorAll(".task-container");
+            containers.forEach(container => {
+              container.addEventListener("dragover", (e) => {
+                e.preventDefault(); // Necesario para permitir drop
+              });
+
+              container.addEventListener("drop", (e) => {
+                e.preventDefault();
+                const cardId = e.dataTransfer.getData("text/plain");
+                const newColumn = container.id.replace("-tasks", "");
+
+                fetch(`http://localhost:5000/api/cards/${cardId}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json"
+                  },
+                  body: JSON.stringify({ column: newColumn })
+                })
+                  .then(res => {
+                    if (!res.ok) throw new Error("Error al mover la tarjeta");
+                    return res.json();
+                  })
+                  .then(() => {
+                    fetch("http://localhost:5000/api/cards")
+                      .then(res => res.json())
+                      .then(cards => {
+                        clearAllTasks();
+                        cards.forEach(renderCard);
+                      });
+                  })
+                  .catch(err => {
+                    console.error(err);
+                    alert("No se pudo mover la tarjeta");
+                  });
+              });
+            });
+          });
       })
       .catch((error) => {
         console.error("Error loading board.html:", error);
       });
   }, []);
 
+  function addColumn() {
+    Swal.fire("Función no implementada aún", "", "info");
+  }
   function addTask() {
-    const responsible = prompt("Enter the name of the responsible person:");
-    if (!responsible) return;
+    Swal.fire({
+      title: "Nuevo Responsable",
+      input: "text",
+      inputPlaceholder: "Ingresa el nombre del responsable",
+      showCancelButton: true
+    }).then(responsibleResult => {
+      if (!responsibleResult.value) return;
 
-    const description = prompt("Enter the task description:");
-    if (!description) return;
+      Swal.fire({
+        title: "Descripción de la tarea",
+        input: "text",
+        inputPlaceholder: "Ingresa la descripción",
+        showCancelButton: true
+      }).then(descriptionResult => {
+        if (!descriptionResult.value) return;
 
-    const columnChoice = prompt("Enter the column name (e.g. todo, doing, done, or custom):").toLowerCase();
+        const columnChoice = "todo"; // Ahora todas las tareas se crearán en "todo"
 
-    const container = document.getElementById(`${columnChoice}-tasks`);
+        // Enviar al backend
+        fetch("http://localhost:5000/api/cards", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json"
+          },
+          body: JSON.stringify({
+            responsible: responsibleResult.value,
+            description: descriptionResult.value,
+            column: columnChoice
+          })
+        })
+          .then(res => {
+            if (!res.ok) throw new Error("Error al guardar la tarjeta");
+            return res.json();
+          })
+          .then(data => {
+            Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
+            fetch("http://localhost:5000/api/cards")
+              .then(res => res.json())
+              .then(cards => {
+                clearAllTasks();
+                cards.forEach(renderCard);
+              });
+          })
+          .catch(err => {
+            console.error(err);
+            Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
+          });
+      });
+    });
+  }
+  function renderCard(card) {
+    const container = document.getElementById(`${card.column}-tasks`);
     if (!container) {
-      alert("Column not found. Please try again.");
+      console.warn(`Column ${card.column} not found`);
       return;
     }
 
-    const card = document.createElement("div");
-    card.className = "task-card";
-    card.innerHTML = `
-      <p class="responsible">👤 ${responsible}</p>
-      <p>${description}</p>
+    const div = document.createElement("div");
+    div.className = "task-card";
+    div.setAttribute("draggable", true);
+    div.dataset.id = card._id;
+
+    // Eventos para drag
+    div.addEventListener("dragstart", (e) => {
+      e.dataTransfer.setData("text/plain", card._id);
+    });
+
+    const editBtn = document.createElement("button");
+    editBtn.textContent = "✏️ Editar";
+    editBtn.className = "edit-btn";
+
+    const deleteBtn = document.createElement("button");
+    deleteBtn.textContent = "🗑️ Eliminar";
+    deleteBtn.className = "delete-btn";
+
+    deleteBtn.addEventListener("click", () => {
+      Swal.fire({
+        title: "¿Seguro?",
+        text: "Esta tarjeta será eliminada permanentemente.",
+        icon: "warning",
+        showCancelButton: true,
+        confirmButtonText: "Sí, eliminar",
+        cancelButtonText: "No, cancelar"
+      }).then((result) => {
+        if (result.isConfirmed) {
+          fetch(`http://localhost:5000/api/cards/${card._id}`, {
+            method: "DELETE",
+          })
+            .then(async (res) => {
+              if (!res.ok) {
+                const errorText = await res.text();
+                console.error("Error:", res.status, errorText);
+                throw new Error("No se pudo eliminar la tarjeta");
+              }
+              return res.json();
+            })
+            .then(() => {
+              div.remove(); // Eliminación en DOM
+              Swal.fire("¡Eliminada!", "La tarjeta se ha eliminado correctamente.", "success");
+            })
+            .catch((err) => {
+              console.error(err);
+              Swal.fire("Error", "No se pudo eliminar la tarjeta.", "error");
+            });
+        }
+      });
+    });
+
+    editBtn.addEventListener("click", () => {
+      Swal.fire({
+        title: "Nuevo responsable",
+        input: "text",
+        inputValue: card.responsible,
+        showCancelButton: true
+      }).then(responsibleResult => {
+        if (!responsibleResult.value) return;
+
+        Swal.fire({
+          title: "Nueva descripción",
+          input: "text",
+          inputValue: card.description,
+          showCancelButton: true
+        }).then(descriptionResult => {
+          if (!descriptionResult.value) return;
+
+          fetch(`http://localhost:5000/api/cards/${card._id}`, {
+            method: "PUT",
+            headers: {
+              "Content-Type": "application/json"
+            },
+            body: JSON.stringify({
+              responsible: responsibleResult.value,
+              description: descriptionResult.value,
+              column: card.column
+            })
+          })
+            .then(res => {
+              if (!res.ok) throw new Error("Error al editar la tarjeta");
+              return res.json();
+            })
+            .then(updatedCard => {
+              Swal.fire("¡Actualizada!", "La tarjeta se ha editado correctamente.", "success");
+              fetch("http://localhost:5000/api/cards")
+                .then(res => res.json())
+                .then(cards => {
+                  clearAllTasks();
+                  cards.forEach(renderCard);
+                });
+            })
+            .catch(err => {
+              console.error(err);
+              Swal.fire("Error", "No se pudo editar la tarjeta.", "error");
+            });
+        });
+      });
+    });
+
+    div.innerHTML = `
+      <p class="responsible">👤 ${card.responsible}</p>
+      <p>${card.description}</p>
     `;
-    container.appendChild(card);
+
+    div.appendChild(editBtn);
+    div.appendChild(deleteBtn);
+    container.appendChild(div);
   }
 
-  function addColumn() {
-    const columnName = prompt("Enter the name for the new column:").toLowerCase().trim();
-    if (!columnName) return;
-
-    const board = document.getElementById("board");
-
-    if (document.getElementById(`${columnName}-tasks`)) {
-      alert("A column with this name already exists.");
-      return;
-    }
-
-    const column = document.createElement("div");
-    column.className = "column";
-    column.setAttribute("data-id", columnName);
-
-    const title = document.createElement("h2");
-    title.textContent = columnName.charAt(0).toUpperCase() + columnName.slice(1);
-
-    const taskContainer = document.createElement("div");
-    taskContainer.className = "task-container";
-    taskContainer.id = `${columnName}-tasks`;
-
-    column.appendChild(title);
-    column.appendChild(taskContainer);
-
-    board.appendChild(column);
+  function clearAllTasks() {
+    document.querySelectorAll(".task-container").forEach(container => container.innerHTML = "");
   }
 
   return (
