@@ -52,7 +52,7 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
         <div className="logo">
           <img src={logo} alt="logo" />
           <div className="username">
-            <span>Hola, {username}</span> {/* Aquí se muestra el username */}
+            <span>Hello, {username}</span> {/* Aquí se muestra el username */}
           </div>
         </div>
         <div className="menu-toggle">
