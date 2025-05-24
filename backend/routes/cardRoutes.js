@@ -2,20 +2,31 @@ const express = require('express');
 const router = express.Router();
 const Card = require('../models/Card');
 
-// Crear nueva tarjeta
+// Crear una nueva tarjeta vinculada a un tablero (sin autenticación)
 router.post('/', async (req, res) => {
-    console.log("📩 POST recibido en /api/cards");
-    console.log("Contenido del body:", req.body);
-
-    const { responsible, description, column } = req.body;
+    const { responsible, description, column, boardId } = req.body;
 
     try {
-        const newCard = new Card({ responsible, description, column });
+        if (!boardId) {
+            return res.status(400).json({ error: "Board ID is required" });
+        }
+
+        const newCard = new Card({ responsible, description, column, boardId });
         await newCard.save();
-        res.status(201).json({ message: 'Card created successfully' });
+        res.status(201).json({ message: "Card created successfully", card: newCard });
     } catch (error) {
-        console.error("❌ Error al guardar la tarjeta:", error);
-        res.status(500).json({ error: 'Error saving card to the database' });
+        console.error("❌ Error creating card:", error);
+        res.status(500).json({ error: "Error saving card to the database" });
+    }
+});
+
+// Obtener tarjetas de un tablero específico
+router.get('/board/:boardId', async (req, res) => {
+    try {
+        const cards = await Card.find({ boardId: req.params.boardId });
+        res.status(200).json(cards);
+    } catch (error) {
+        res.status(500).json({ error: "Error fetching cards" });
     }
 });
 
@@ -28,20 +39,10 @@ router.put('/:id', async (req, res) => {
             { responsible, description, column },
             { new: true }
         );
-        if (!updatedCard) return res.status(404).json({ error: 'Card not found' });
+        if (!updatedCard) return res.status(404).json({ error: "Card not found" });
         res.json(updatedCard);
     } catch (error) {
-        res.status(500).json({ error: 'Error updating card' });
-    }
-});
-
-// (Opcional) Obtener todas las tarjetas
-router.get('/', async (req, res) => {
-    try {
-        const cards = await Card.find();
-        res.status(200).json(cards);
-    } catch (error) {
-        res.status(500).json({ error: 'Error fetching cards' });
+        res.status(500).json({ error: "Error updating card" });
     }
 });
 
@@ -49,10 +50,10 @@ router.get('/', async (req, res) => {
 router.delete('/:id', async (req, res) => {
     try {
         const deletedCard = await Card.findByIdAndDelete(req.params.id);
-        if (!deletedCard) return res.status(404).json({ error: 'Card not found' });
-        res.json({ message: 'Card deleted successfully' });
+        if (!deletedCard) return res.status(404).json({ error: "Card not found" });
+        res.json({ message: "Card deleted successfully" });
     } catch (error) {
-        res.status(500).json({ error: 'Error deleting card' });
+        res.status(500).json({ error: "Error deleting card" });
     }
 });
 
