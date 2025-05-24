@@ -152,4 +152,31 @@ router.get("/:boardId/contribuyentes", async (req, res) => {
   }
 });
 
+router.get("/:boardId/mi-rol", verifyToken, async (req, res) => {
+  try {
+    const { boardId } = req.params;
+    const userId = req.user.id; // 📌 Extraer ID del usuario desde el token
+
+    const tablero = await Tablero.findById(boardId);
+    if (!tablero) return res.status(404).json({ error: "Tablero no encontrado" });
+
+    // Verificar si el usuario es el creador del tablero
+    if (tablero.creadoPor.toString() === userId) {
+      return res.json({ rol: "edition" }); // ✅ El creador tiene permisos de edición
+    }
+
+    // Verificar si el usuario es contribuyente
+    const contribuyente = tablero.contribuyentes.find(c => c.usuario.toString() === userId);
+    if (!contribuyente) {
+      return res.json({ rol: "none" }); // 🚨 No tiene acceso al tablero
+    }
+
+    // Retornar el rol asignado
+    res.json({ rol: contribuyente.rol });
+
+  } catch (error) {
+    res.status(500).json({ error: "Error al verificar rol en el tablero" });
+  }
+});
+
 module.exports = router;
