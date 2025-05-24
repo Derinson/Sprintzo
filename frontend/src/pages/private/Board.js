@@ -89,59 +89,78 @@ function Board() {
   }
 
   function addTask() {
-    const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
+  const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
 
-    Swal.fire({
-      title: "Nuevo Responsable",
-      input: "text",
-      inputPlaceholder: "Ingresa el nombre del responsable",
-      showCancelButton: true
-    }).then(responsibleResult => {
-      if (!responsibleResult.value) return;
+  // Obtener contribuyentes del tablero antes de mostrar el formulario
+  fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  })
+    .then(res => res.json())
+    .then(contribuyentes => {
+      if (!contribuyentes.length) {
+        Swal.fire("Error", "No hay contribuyentes en este tablero.", "error");
+        return;
+      }
 
       Swal.fire({
-        title: "Descripción de la tarea",
-        input: "text",
-        inputPlaceholder: "Ingresa la descripción",
+        title: "Asignar responsable",
+        input: "select",
+        inputOptions: Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `])), // 📌 Mostrar email + rol
         showCancelButton: true
-      }).then(descriptionResult => {
-        if (!descriptionResult.value) return;
+      }).then(responsibleResult => {
+        if (!responsibleResult.value) return;
 
-        const columnChoice = "todo"; // Todas las tareas se crearán en "todo"
+        Swal.fire({
+          title: "Descripción de la tarea",
+          input: "text",
+          inputPlaceholder: "Ingresa la descripción",
+          showCancelButton: true
+        }).then(descriptionResult => {
+          if (!descriptionResult.value) return;
 
-        const token = localStorage.getItem("token");
+          const columnChoice = "todo"; // Todas las tareas se crearán en "todo"
 
-        // Enviar al backend con el `boardId`
-        fetch("http://localhost:5000/api/cards", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            responsible: responsibleResult.value,
-            description: descriptionResult.value,
-            column: columnChoice,
-            boardId // 📌 Enviar el ID del tablero
+          const token = localStorage.getItem("token");
+
+          // Enviar al backend con el `boardId`
+          fetch("http://localhost:5000/api/cards", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              responsible: responsibleResult.value,
+              description: descriptionResult.value,
+              column: columnChoice,
+              boardId // 📌 Enviar el ID del tablero
+            })
           })
-        })
-          .then(res => res.json())
-          .then(() => {
-            Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
-            fetch(`http://localhost:5000/api/cards/board/${boardId}`)
-              .then(res => res.json())
-              .then(cards => {
-                clearAllTasks();
-                cards.forEach(renderCard);
-              });
-          })
-          .catch(err => {
-            console.error(err);
-            Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
-          });
+            .then(res => res.json())
+            .then(() => {
+              Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
+              fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+                .then(res => res.json())
+                .then(cards => {
+                  clearAllTasks();
+                  cards.forEach(renderCard);
+                });
+            })
+            .catch(err => {
+              console.error(err);
+              Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
+            });
+        });
       });
+    })
+    .catch(error => {
+      console.error("Error obteniendo contribuyentes:", error);
+      Swal.fire("Error", "Hubo un problema al obtener los contribuyentes.", "error");
     });
-  }
+}
+
 
   function renderCard(card) {
     const container = document.getElementById(`${card.column}-tasks`);

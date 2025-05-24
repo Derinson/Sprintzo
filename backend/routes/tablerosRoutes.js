@@ -141,4 +141,15 @@ router.put("/:id", verifyToken, async (req, res) => {
   }
 });
 
+router.get("/:boardId/contribuyentes", async (req, res) => {
+  try {
+    const tablero = await Tablero.findById(req.params.boardId);
+    if (!tablero) return res.status(404).json({ error: "Tablero no encontrado" });
+
+    res.json(tablero.contribuyentes); // 📌 Devolver lista de contribuyentes
+  } catch (error) {
+    res.status(500).json({ error: "Error al obtener contribuyentes" });
+  }
+});
+
 module.exports = router;
