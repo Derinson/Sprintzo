@@ -63,6 +63,11 @@
   margin-bottom: 12px;
   transition: transform 0.2s ease, box-shadow 0.2s ease;
 }
+.disabled-view {
+    pointer-events: none;  /* 🔒 Bloquea interacciones */
+    
+}
+
 
 .task-card:hover {
   transform: scale(1.02);

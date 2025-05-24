@@ -14,6 +14,34 @@ function Board() {
     localStorage.removeItem("token");
     window.location.href = "/login";
   };
+useEffect(() => {
+    const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
+
+    // Verificar el rol del usuario en el tablero
+    fetch(`http://localhost:5000/tablerosRoutes/${boardId}/mi-rol`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+    })
+    .then(res => res.json())
+    .then(data => {
+        if (data.rol === "edition") {
+            Swal.fire("✅ Acceso", "Tienes permisos de edición en este tablero.", "success");
+        } else if (data.rol === "reading") {
+            Swal.fire("🔒 Acceso limitado", "Solo tienes permisos de lectura en este tablero.", "info");
+
+            // 📌 Aplicar clase CSS para deshabilitar interacciones
+            document.querySelector("#vista").classList.add("disabled-view");
+        } else {
+            Swal.fire("❌ Acceso denegado", "No tienes acceso a este tablero.", "error");
+            return;
+        }
+    })
+    .catch(error => {
+        console.error("Error verificando permisos:", error);
+    });
+}, []);
+
+
+
 
   useEffect(() => {
     fetch("/pages/board.html")
@@ -34,6 +62,8 @@ function Board() {
         // Obtener el `boardId` desde la URL
         const boardId = window.location.pathname.split("/board/")[1];
 
+
+        
         // Cargar las tareas del tablero desde la base de datos
         fetch(`http://localhost:5000/api/cards/board/${boardId}`)
           .then(res => res.json())
@@ -89,59 +119,78 @@ function Board() {
   }
 
   function addTask() {
-    const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
+  const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
 
-    Swal.fire({
-      title: "Nuevo Responsable",
-      input: "text",
-      inputPlaceholder: "Ingresa el nombre del responsable",
-      showCancelButton: true
-    }).then(responsibleResult => {
-      if (!responsibleResult.value) return;
+  // Obtener contribuyentes del tablero antes de mostrar el formulario
+  fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  })
+    .then(res => res.json())
+    .then(contribuyentes => {
+      if (!contribuyentes.length) {
+        Swal.fire("Error", "No hay contribuyentes en este tablero.", "error");
+        return;
+      }
 
       Swal.fire({
-        title: "Descripción de la tarea",
-        input: "text",
-        inputPlaceholder: "Ingresa la descripción",
+        title: "Asignar responsable",
+        input: "select",
+        inputOptions: Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `])), // 📌 Mostrar email + rol
         showCancelButton: true
-      }).then(descriptionResult => {
-        if (!descriptionResult.value) return;
+      }).then(responsibleResult => {
+        if (!responsibleResult.value) return;
 
-        const columnChoice = "todo"; // Todas las tareas se crearán en "todo"
+        Swal.fire({
+          title: "Descripción de la tarea",
+          input: "text",
+          inputPlaceholder: "Ingresa la descripción",
+          showCancelButton: true
+        }).then(descriptionResult => {
+          if (!descriptionResult.value) return;
 
-        const token = localStorage.getItem("token");
+          const columnChoice = "todo"; // Todas las tareas se crearán en "todo"
 
-        // Enviar al backend con el `boardId`
-        fetch("http://localhost:5000/api/cards", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${token}`
-          },
-          body: JSON.stringify({
-            responsible: responsibleResult.value,
-            description: descriptionResult.value,
-            column: columnChoice,
-            boardId // 📌 Enviar el ID del tablero
+          const token = localStorage.getItem("token");
+
+          // Enviar al backend con el `boardId`
+          fetch("http://localhost:5000/api/cards", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              "Authorization": `Bearer ${token}`
+            },
+            body: JSON.stringify({
+              responsible: responsibleResult.value,
+              description: descriptionResult.value,
+              column: columnChoice,
+              boardId // 📌 Enviar el ID del tablero
+            })
           })
-        })
-          .then(res => res.json())
-          .then(() => {
-            Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
-            fetch(`http://localhost:5000/api/cards/board/${boardId}`)
-              .then(res => res.json())
-              .then(cards => {
-                clearAllTasks();
-                cards.forEach(renderCard);
-              });
-          })
-          .catch(err => {
-            console.error(err);
-            Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
-          });
+            .then(res => res.json())
+            .then(() => {
+              Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
+              fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+                .then(res => res.json())
+                .then(cards => {
+                  clearAllTasks();
+                  cards.forEach(renderCard);
+                });
+            })
+            .catch(err => {
+              console.error(err);
+              Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
+            });
+        });
       });
+    })
+    .catch(error => {
+      console.error("Error obteniendo contribuyentes:", error);
+      Swal.fire("Error", "Hubo un problema al obtener los contribuyentes.", "error");
     });
-  }
+}
+
 
   function renderCard(card) {
     const container = document.getElementById(`${card.column}-tasks`);
@@ -167,52 +216,94 @@ function Board() {
     deleteBtn.textContent = "🗑️ Eliminar";
     deleteBtn.className = "delete-btn";
 
-    deleteBtn.addEventListener("click", () => {
+     deleteBtn.addEventListener("click", () => {
+  Swal.fire({
+    title: "¿Estás seguro?",
+    text: "Esta acción no se puede deshacer.",
+    icon: "warning",
+    showCancelButton: true,
+    confirmButtonColor: "#d33",
+    cancelButtonColor: "#3085d6",
+    confirmButtonText: "Sí, eliminar",
+    cancelButtonText: "Cancelar"
+  }).then((result) => {
+    if (result.isConfirmed) {
       fetch(`http://localhost:5000/api/cards/${card._id}`, {
         method: "DELETE",
       })
-        .then(() => {
-          div.remove();
-          Swal.fire("¡Eliminada!", "La tarjeta se ha eliminado correctamente.", "success");
-        })
-        .catch(err => Swal.fire("Error", "No se pudo eliminar la tarjeta.", "error"));
-    });
+      .then(() => {
+        div.remove();
+        Swal.fire("¡Eliminada!", "La tarjeta se ha eliminado correctamente.", "success");
+      })
+      .catch(err => Swal.fire("Error", "No se pudo eliminar la tarjeta.", "error"));
+    }
+  });
+});
 
-    editBtn.addEventListener("click", () => {
+
+ editBtn.addEventListener("click", () => {
+  // 📌 Obtener los contribuyentes del tablero
+  const boardId = window.location.pathname.split("/board/")[1];
+
+  fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+    headers: {
+      "Authorization": `Bearer ${localStorage.getItem("token")}`
+    }
+  })
+  .then(res => res.json())
+  .then(contribuyentes => {
+    if (!contribuyentes.length) {
+      Swal.fire("Error", "No hay contribuyentes en este tablero.", "error");
+      return;
+    }
+
+    Swal.fire({
+      title: "Selecciona el nuevo responsable",
+      input: "select",
+      inputOptions: Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `])), // 📌 Mostrar email + rol
+      inputValue: card.responsible, // 📌 Responsable actual
+      showCancelButton: true
+    }).then(responsibleResult => {
+      if (!responsibleResult.value) return;
+
       Swal.fire({
-        title: "Nuevo responsable",
+        title: "Nueva descripción",
         input: "text",
-        inputValue: card.responsible,
+        inputValue: card.description,
         showCancelButton: true
-      }).then(responsibleResult => {
-        if (!responsibleResult.value) return;
+      }).then(descriptionResult => {
+        if (!descriptionResult.value) return;
 
-        Swal.fire({
-          title: "Nueva descripción",
-          input: "text",
-          inputValue: card.description,
-          showCancelButton: true
-        }).then(descriptionResult => {
-          if (!descriptionResult.value) return;
-
-          fetch(`http://localhost:5000/api/cards/${card._id}`, {
-            method: "PUT",
-            headers: {
-              "Content-Type": "application/json"
-            },
-            body: JSON.stringify({
-              responsible: responsibleResult.value,
-              description: descriptionResult.value,
-              column: card.column
-            })
+        fetch(`http://localhost:5000/api/cards/${card._id}`, {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+            "Authorization": `Bearer ${localStorage.getItem("token")}`
+          },
+          body: JSON.stringify({
+            responsible: responsibleResult.value,
+            description: descriptionResult.value,
+            column: card.column
           })
-            .then(() => {
-              Swal.fire("¡Actualizada!", "La tarjeta se ha editado correctamente.", "success");
-            })
-            .catch(err => Swal.fire("Error", "No se pudo editar la tarjeta.", "error"));
-        });
+        })
+        .then(() => {
+          // 📌 ACTUALIZAR tarjeta en el DOM SIN recargar
+          div.querySelector(".responsible").textContent = `👤 ${responsibleResult.value}`;
+          div.querySelector("p:nth-child(2)").textContent = descriptionResult.value;
+
+          Swal.fire("¡Actualizada!", "La tarjeta se ha editado correctamente.", "success");
+        })
+        .catch(err => Swal.fire("Error", "No se pudo editar la tarjeta.", "error"));
       });
     });
+  })
+  .catch(error => {
+    console.error("Error obteniendo contribuyentes:", error);
+    Swal.fire("Error", "Hubo un problema al obtener los contribuyentes.", "error");
+  });
+});
+
+
 
     div.innerHTML = `<p class="responsible">👤 ${card.responsible}</p><p>${card.description}</p>`;
     div.appendChild(editBtn);
