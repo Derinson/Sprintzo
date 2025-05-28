@@ -4,14 +4,14 @@ const Card = require('../models/Card');
 
 // Crear una nueva tarjeta vinculada a un tablero (sin autenticación)
 router.post('/', async (req, res) => {
-    const { responsible, description, column, boardId } = req.body;
+    const { title, responsible, description, column, boardId } = req.body;
 
     try {
         if (!boardId) {
             return res.status(400).json({ error: "Board ID is required" });
         }
 
-        const newCard = new Card({ responsible, description, column, boardId });
+        const newCard = new Card({ title, responsible, description, column, boardId });
         await newCard.save();
         res.status(201).json({ message: "Card created successfully", card: newCard });
     } catch (error) {
@@ -32,11 +32,11 @@ router.get('/board/:boardId', async (req, res) => {
 
 // Actualizar una tarjeta
 router.put('/:id', async (req, res) => {
-    const { responsible, description, column } = req.body;
+    const { title, responsible, description, column } = req.body;
     try {
         const updatedCard = await Card.findByIdAndUpdate(
             req.params.id,
-            { responsible, description, column },
+            { title, responsible, description, column },
             { new: true }
         );
         if (!updatedCard) return res.status(404).json({ error: "Card not found" });

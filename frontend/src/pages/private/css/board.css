@@ -131,3 +131,68 @@
   padding: 16px;
   overflow-x: auto;
 }
+
+/* Rol Banner */
+.role-banner {
+  position: fixed;
+  top: 0;
+  right: 20px;
+  padding: 8px 15px;
+  border-radius: 0 0 8px 8px;
+  color: white;
+  font-weight: bold;
+  z-index: 1000;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+}
+
+/* Contenedor de Colaboradores */
+.contributors-container {
+  position: fixed;
+  top: 10px;
+  padding: 8px 15px;
+  display: flex;
+  gap: 8px;
+  z-index: 1000;
+  background-color: white;
+  border-radius: 15px;
+  box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  transition: left 0.3s ease;
+  align-items: center;
+}
+
+.menu-open .contributors-container {
+  left: 280px;
+}
+
+.menu-closed .contributors-container {
+  left: 80px;
+}
+
+.contributors-label {
+  margin-right: 8px;
+  font-size: 14px;
+  color: #666;
+  font-weight: 500;
+}
+
+/* Avatar de Colaborador */
+.contributor-avatar {
+  width: 32px;
+  height: 32px;
+  border-radius: 50%;
+  color: white;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  transition: transform 0.2s;
+}
+
+.contributor-avatar:hover {
+  transform: scale(1.1);
+}
