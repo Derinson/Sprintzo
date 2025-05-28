@@ -57,10 +57,18 @@ router.post("/", verifyToken, async (req, res) => {
     const { nombre } = req.body;
     if (!nombre) return res.status(400).json({ message: "🚨 El nombre es obligatorio." });
 
+    // Obtener el email del usuario creador
+    const usuario = await User.findById(req.user.id);
+    if (!usuario) return res.status(404).json({ message: "🚨 Usuario no encontrado" });
+
     const nuevoTablero = new Tablero({
       nombre,
       creadoPor: req.user.id,
-      contribuyentes: [],
+      contribuyentes: [{
+        usuario: req.user.id,
+        email: usuario.email,
+        rol: "edition"
+      }],
     });
 
     await nuevoTablero.save();
@@ -99,7 +107,12 @@ router.post("/contribuyente/:id", verifyToken, async (req, res) => {
 // 📌 Obtener tableros compartidos con el usuario
 router.get("/compartidos", verifyToken, async (req, res) => {
   try {
-    const tableros = await Tablero.find({ "contribuyentes.usuario": req.user.id });
+    const tableros = await Tablero.find({
+      $and: [
+        { "contribuyentes.usuario": req.user.id }, // El usuario está en contribuyentes
+        { creadoPor: { $ne: req.user.id } }       // El usuario NO es el creador
+      ]
+    });
     res.status(200).json(tableros);
   } catch (error) {
     res.status(500).json({ message: "🚨 Error al obtener tableros compartidos", error });

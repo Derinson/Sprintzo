@@ -1,6 +1,7 @@
 const mongoose = require('mongoose');
 
 const cardSchema = new mongoose.Schema({
+    title: { type: String, required: true }, // 📌 Ahora cada tarjeta tiene un título obligatorio
     responsible: { type: String, required: true },
     description: { type: String, required: true },
     column: { type: String, required: true },

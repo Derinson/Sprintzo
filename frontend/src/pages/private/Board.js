@@ -5,6 +5,8 @@ import Swal from "sweetalert2"; // Importamos SweetAlert
 
 function Board() {
   const [menuOpen, setMenuOpen] = useState(true); // Estado para controlar el menú
+  const [userRole, setUserRole] = useState(null); // Nuevo estado para el rol
+  const [contributors, setContributors] = useState([]);
 
   const toggleMenu = () => {
     setMenuOpen(!menuOpen); // Alterna entre abierto/cerrado
@@ -14,34 +16,85 @@ function Board() {
     localStorage.removeItem("token");
     window.location.href = "/login";
   };
-useEffect(() => {
-    const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
 
-    // Verificar el rol del usuario en el tablero
-    fetch(`http://localhost:5000/tablerosRoutes/${boardId}/mi-rol`, {
+  // Función para obtener el color según el rol
+  const getRoleColor = (role) => {
+    switch(role) {
+      case "edition": return "#4CAF50";
+      case "reading": return "#2196F3";
+      default: return "#f44336";
+    }
+  };
+
+  // Función para obtener el icono según el rol
+  const getRoleIcon = (role) => {
+    switch(role) {
+      case "edition": return "✏️";
+      case "reading": return "👁️";
+      default: return "⛔";
+    }
+  };
+
+  // Función para obtener las iniciales de un email
+  const getInitials = (email) => {
+    const name = email.split('@')[0];
+    const words = name.split(/[._-]/);
+    return words.map(word => word[0].toUpperCase()).join('');
+  };
+
+  // Función para obtener un color basado en el email
+  const getRandomColor = (email) => {
+    const colors = [
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+      '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
+      '#E67E22', '#27AE60', '#F1C40F', '#E74C3C'
+    ];
+    const index = email.split('').reduce((acc, char) => acc + char.charCodeAt(0), 0);
+    return colors[index % colors.length];
+  };
+
+  useEffect(() => {
+    const boardId = window.location.pathname.split("/board/")[1];
+
+    // Obtener el rol y los contribuyentes
+    Promise.all([
+      fetch(`http://localhost:5000/tablerosRoutes/${boardId}/mi-rol`, {
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
-    })
-    .then(res => res.json())
-    .then(data => {
-        if (data.rol === "edition") {
-            Swal.fire("✅ Acceso", "Tienes permisos de edición en este tablero.", "success");
-        } else if (data.rol === "reading") {
-            Swal.fire("🔒 Acceso limitado", "Solo tienes permisos de lectura en este tablero.", "info");
+      }),
+      fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+        headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
+      })
+    ])
+    .then(([rolRes, contribRes]) => Promise.all([rolRes.json(), contribRes.json()]))
+    .then(([rolData, contribData]) => {
+      setUserRole(rolData.rol);
+      setContributors(contribData);
 
-            // 📌 Aplicar clase CSS para deshabilitar interacciones
-            document.querySelector("#vista").classList.add("disabled-view");
-        } else {
-            Swal.fire("❌ Acceso denegado", "No tienes acceso a este tablero.", "error");
-            return;
-        }
+      if (rolData.rol === "edition") {
+        // Lógica para editor
+      } else if (rolData.rol === "reading") {
+        document.querySelector("#vista").classList.add("disabled-view");
+      } else {
+        Swal.fire({
+          title: "❌ Access Denied",
+          text: "You don't have access to this board",
+          icon: "error",
+          confirmButtonText: "OK"
+        }).then(() => {
+          window.location.href = "/dashboard";
+        });
+      }
     })
     .catch(error => {
-        console.error("Error verificando permisos:", error);
+      console.error("Error:", error);
+      Swal.fire({
+        title: "Error",
+        text: "There was a problem loading the data",
+        icon: "error",
+        confirmButtonText: "OK"
+      });
     });
-}, []);
-
-
-
+  }, []);
 
   useEffect(() => {
     fetch("/pages/board.html")
@@ -115,82 +168,93 @@ useEffect(() => {
   }, []);
 
   function addColumn() {
-    Swal.fire("Función no implementada aún", "", "info");
+    Swal.fire("Feature not implemented yet", "", "info");
   }
 
   function addTask() {
-  const boardId = window.location.pathname.split("/board/")[1]; // 📌 Extraer ID del tablero
+    const boardId = window.location.pathname.split("/board/")[1];
 
-  // Obtener contribuyentes del tablero antes de mostrar el formulario
-  fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
-    headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
-    }
-  })
-    .then(res => res.json())
-    .then(contribuyentes => {
-      if (!contribuyentes.length) {
-        Swal.fire("Error", "No hay contribuyentes en este tablero.", "error");
-        return;
+    fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+      headers: {
+        "Authorization": `Bearer ${localStorage.getItem("token")}`
       }
-
-      Swal.fire({
-        title: "Asignar responsable",
-        input: "select",
-        inputOptions: Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `])), // 📌 Mostrar email + rol
-        showCancelButton: true
-      }).then(responsibleResult => {
-        if (!responsibleResult.value) return;
+    })
+      .then(res => res.json())
+      .then(contribuyentes => {
+        if (!contribuyentes.length) {
+          Swal.fire("Error", "No contributors in this board.", "error");
+          return;
+        }
 
         Swal.fire({
-          title: "Descripción de la tarea",
+          title: "Task Title",
           input: "text",
-          inputPlaceholder: "Ingresa la descripción",
-          showCancelButton: true
-        }).then(descriptionResult => {
-          if (!descriptionResult.value) return;
+          inputPlaceholder: "Enter title",
+          showCancelButton: true,
+          confirmButtonText: 'Next',
+          cancelButtonText: 'Cancel'
+        }).then(titleResult => {
+          if (!titleResult.value) return;
 
-          const columnChoice = "todo"; // Todas las tareas se crearán en "todo"
-
-          const token = localStorage.getItem("token");
-
-          // Enviar al backend con el `boardId`
-          fetch("http://localhost:5000/api/cards", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              "Authorization": `Bearer ${token}`
+          Swal.fire({
+            title: "Assign Responsible",
+            input: "select",
+            inputOptions: {
+              "": "🔹 Unassigned",
+              ...Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `]))
             },
-            body: JSON.stringify({
-              responsible: responsibleResult.value,
-              description: descriptionResult.value,
-              column: columnChoice,
-              boardId // 📌 Enviar el ID del tablero
-            })
-          })
-            .then(res => res.json())
-            .then(() => {
-              Swal.fire("¡Guardado!", "La tarjeta se ha creado correctamente.", "success");
-              fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+            showCancelButton: true,
+            confirmButtonText: 'Next',
+            cancelButtonText: 'Cancel'
+          }).then(responsibleResult => {
+            if (responsibleResult.dismiss) return;
+
+            Swal.fire({
+              title: "Task Description",
+              input: "text",
+              inputPlaceholder: "Enter description",
+              showCancelButton: true,
+              confirmButtonText: 'Create',
+              cancelButtonText: 'Cancel'
+            }).then(descriptionResult => {
+              if (!descriptionResult.value) return;
+
+              const columnChoice = "todo";
+              const token = localStorage.getItem("token");
+
+              fetch("http://localhost:5000/api/cards", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                  "Authorization": `Bearer ${token}`
+                },
+                body: JSON.stringify({
+                  title: titleResult.value,
+                  responsible: responsibleResult.value || "Unassigned",
+                  description: descriptionResult.value,
+                  column: columnChoice,
+                  boardId
+                })
+              })
                 .then(res => res.json())
-                .then(cards => {
-                  clearAllTasks();
-                  cards.forEach(renderCard);
+                .then(() => {
+                  Swal.fire("Saved!", "The card has been created successfully.", "success");
+                  fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+                    .then(res => res.json())
+                    .then(cards => {
+                      clearAllTasks();
+                      cards.forEach(renderCard);
+                    });
+                })
+                .catch(err => {
+                  console.error(err);
+                  Swal.fire("Error", "Could not save the task in the database.", "error");
                 });
-            })
-            .catch(err => {
-              console.error(err);
-              Swal.fire("Error", "No se pudo guardar la tarea en la base de datos.", "error");
             });
+          });
         });
       });
-    })
-    .catch(error => {
-      console.error("Error obteniendo contribuyentes:", error);
-      Swal.fire("Error", "Hubo un problema al obtener los contribuyentes.", "error");
-    });
-}
-
+  }
 
   function renderCard(card) {
     const container = document.getElementById(`${card.column}-tasks`);
@@ -204,110 +268,186 @@ useEffect(() => {
     div.setAttribute("draggable", true);
     div.dataset.id = card._id;
 
+    const contentDiv = document.createElement("div");
+    contentDiv.className = "task-content";
+    contentDiv.style.cursor = "pointer";
+    contentDiv.style.transition = "background-color 0.3s ease";
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "titl";
+    titleElement.textContent = `📌 ${card.title}`;
+
+    const responsibleElement = document.createElement("p");
+    responsibleElement.className = "responsible";
+    responsibleElement.textContent = `👤 ${card.responsible}`;
+
+    const descriptionElement = document.createElement("p");
+    descriptionElement.className = "description";
+    descriptionElement.textContent = card.description;
+
+    contentDiv.appendChild(titleElement);
+    contentDiv.appendChild(responsibleElement);
+    contentDiv.appendChild(descriptionElement);
+
+    contentDiv.style.backgroundColor = "transparent";
+
+    contentDiv.addEventListener("click", () => {
+      const boardId = window.location.pathname.split("/board/")[1];
+
+      fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
+        headers: {
+          "Authorization": `Bearer ${localStorage.getItem("token")}`
+        }
+      })
+      .then(res => res.json())
+      .then(contribuyentes => {
+        if (!contribuyentes.length) {
+          return Swal.fire({
+            title: "Error",
+            text: "No contributors in this board.",
+            icon: "error",
+            showConfirmButton: true,
+          });
+        }
+
+        Swal.fire({
+          title: '<h2 style="color: #2c3e50; font-size: 24px; margin-bottom: 20px;">✏️ Edit Card</h2>',
+          html: `
+            <div style="text-align: left; padding: 10px;">
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
+                  📝 Title:
+                </label>
+                <input 
+                  id="swal-input-title" 
+                  class="swal2-input" 
+                  value="${card.title}"
+                  style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
+                >
+              </div>
+              
+              <div class="form-group" style="margin-bottom: 20px;">
+                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
+                  👤 Responsible:
+                </label>
+                <select 
+                  id="swal-input-responsible" 
+                  class="swal2-select"
+                  style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background-color: white;"
+                >
+                  <option value="">🔹 Unassigned</option>
+                  ${contribuyentes.map(c => `
+                    <option value="${c.email}" ${c.email === card.responsible ? "selected" : ""}>
+                      ${c.email}
+                    </option>
+                  `).join("")}
+                </select>
+              </div>
+
+              <div class="form-group" style="margin-bottom: 10px;">
+                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
+                  📄 Description:
+                </label>
+                <textarea 
+                  id="swal-input-description" 
+                  class="swal2-textarea"
+                  style="width: 100%; min-height: 100px; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical;"
+                >${card.description}</textarea>
+              </div>
+            </div>
+          `,
+          showDenyButton: true,
+          showCancelButton: true,
+          confirmButtonText: 'Save',
+          denyButtonText: 'Delete',
+          cancelButtonText: 'Cancel',
+          confirmButtonColor: '#3085d6',
+          denyButtonColor: '#dc3545',
+          cancelButtonColor: '#6c757d',
+          width: '600px',
+          focusConfirm: false
+        }).then((result) => {
+          if (result.isConfirmed) {
+            fetch(`http://localhost:5000/api/cards/${card._id}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                "Authorization": `Bearer ${localStorage.getItem("token")}`
+              },
+              body: JSON.stringify({
+                title: document.getElementById("swal-input-title").value,
+                responsible: document.getElementById("swal-input-responsible").value || "Unassigned",
+                description: document.getElementById("swal-input-description").value
+              })
+            })
+            .then(response => {
+              if (!response.ok) throw new Error('Error updating');
+              
+              Swal.fire({
+                title: "Changes saved!",
+                text: "The card has been updated successfully",
+                icon: "success",
+                timer: 1500,
+                timerProgressBar: true,
+                showConfirmButton: false
+              }).then(() => {
+                window.location.reload();
+              });
+            })
+            .catch(() => {
+              Swal.fire('Error', 'Could not update the card', 'error');
+            });
+          } else if (result.isDenied) {
+            Swal.fire({
+              title: 'Are you sure?',
+              text: "This action cannot be undone",
+              icon: 'warning',
+              showCancelButton: true,
+              confirmButtonColor: '#dc3545',
+              cancelButtonColor: '#6c757d',
+              confirmButtonText: 'Yes, delete it',
+              cancelButtonText: 'Cancel'
+            }).then((confirmResult) => {
+              if (confirmResult.isConfirmed) {
+                fetch(`http://localhost:5000/api/cards/${card._id}`, {
+                  method: "DELETE",
+                  headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  }
+                })
+                .then(response => {
+                  if (!response.ok) throw new Error('Error deleting');
+                  
+                  div.remove();
+                  Swal.fire('Deleted!', 'The card has been deleted', 'success');
+                })
+                .catch(() => {
+                  Swal.fire('Error', 'Could not delete the card', 'error');
+                });
+              }
+            });
+          }
+        });
+      })
+      .catch(error => {
+        console.error("Error getting contributors:", error);
+        Swal.fire('Error', 'Could not load contributors', 'error');
+      });
+    });
+
     div.addEventListener("dragstart", (e) => {
       e.dataTransfer.setData("text/plain", card._id);
     });
 
-    const editBtn = document.createElement("button");
-    editBtn.textContent = "✏️ Editar";
-    editBtn.className = "edit-btn";
+    const buttonsDiv = document.createElement("div");
+    buttonsDiv.className = "task-buttons";
+    buttonsDiv.style.display = "flex";
+    buttonsDiv.style.gap = "8px";
+    buttonsDiv.style.marginTop = "10px";
 
-    const deleteBtn = document.createElement("button");
-    deleteBtn.textContent = "🗑️ Eliminar";
-    deleteBtn.className = "delete-btn";
+    div.appendChild(contentDiv);
+    div.appendChild(buttonsDiv);
 
-     deleteBtn.addEventListener("click", () => {
-  Swal.fire({
-    title: "¿Estás seguro?",
-    text: "Esta acción no se puede deshacer.",
-    icon: "warning",
-    showCancelButton: true,
-    confirmButtonColor: "#d33",
-    cancelButtonColor: "#3085d6",
-    confirmButtonText: "Sí, eliminar",
-    cancelButtonText: "Cancelar"
-  }).then((result) => {
-    if (result.isConfirmed) {
-      fetch(`http://localhost:5000/api/cards/${card._id}`, {
-        method: "DELETE",
-      })
-      .then(() => {
-        div.remove();
-        Swal.fire("¡Eliminada!", "La tarjeta se ha eliminado correctamente.", "success");
-      })
-      .catch(err => Swal.fire("Error", "No se pudo eliminar la tarjeta.", "error"));
-    }
-  });
-});
-
-
- editBtn.addEventListener("click", () => {
-  // 📌 Obtener los contribuyentes del tablero
-  const boardId = window.location.pathname.split("/board/")[1];
-
-  fetch(`http://localhost:5000/tablerosRoutes/${boardId}/contribuyentes`, {
-    headers: {
-      "Authorization": `Bearer ${localStorage.getItem("token")}`
-    }
-  })
-  .then(res => res.json())
-  .then(contribuyentes => {
-    if (!contribuyentes.length) {
-      Swal.fire("Error", "No hay contribuyentes en este tablero.", "error");
-      return;
-    }
-
-    Swal.fire({
-      title: "Selecciona el nuevo responsable",
-      input: "select",
-      inputOptions: Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `])), // 📌 Mostrar email + rol
-      inputValue: card.responsible, // 📌 Responsable actual
-      showCancelButton: true
-    }).then(responsibleResult => {
-      if (!responsibleResult.value) return;
-
-      Swal.fire({
-        title: "Nueva descripción",
-        input: "text",
-        inputValue: card.description,
-        showCancelButton: true
-      }).then(descriptionResult => {
-        if (!descriptionResult.value) return;
-
-        fetch(`http://localhost:5000/api/cards/${card._id}`, {
-          method: "PUT",
-          headers: {
-            "Content-Type": "application/json",
-            "Authorization": `Bearer ${localStorage.getItem("token")}`
-          },
-          body: JSON.stringify({
-            responsible: responsibleResult.value,
-            description: descriptionResult.value,
-            column: card.column
-          })
-        })
-        .then(() => {
-          // 📌 ACTUALIZAR tarjeta en el DOM SIN recargar
-          div.querySelector(".responsible").textContent = `👤 ${responsibleResult.value}`;
-          div.querySelector("p:nth-child(2)").textContent = descriptionResult.value;
-
-          Swal.fire("¡Actualizada!", "La tarjeta se ha editado correctamente.", "success");
-        })
-        .catch(err => Swal.fire("Error", "No se pudo editar la tarjeta.", "error"));
-      });
-    });
-  })
-  .catch(error => {
-    console.error("Error obteniendo contribuyentes:", error);
-    Swal.fire("Error", "Hubo un problema al obtener los contribuyentes.", "error");
-  });
-});
-
-
-
-    div.innerHTML = `<p class="responsible">👤 ${card.responsible}</p><p>${card.description}</p>`;
-    div.appendChild(editBtn);
-    div.appendChild(deleteBtn);
     container.appendChild(div);
   }
 
@@ -318,6 +458,87 @@ useEffect(() => {
   return (
     <div className="board-wrapper">
       <MenuDashboard handleLogout={handleLogout} toggleMenu={toggleMenu} menuOpen={menuOpen} />
+      
+      {/* Banner de rol */}
+      {userRole && (
+        <div 
+          style={{
+            position: 'fixed',
+            top: '0',
+            right: '20px',
+            padding: '8px 15px',
+            borderRadius: '0 0 8px 8px',
+            backgroundColor: getRoleColor(userRole),
+            color: 'white',
+            fontWeight: 'bold',
+            zIndex: 1000,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '8px',
+            boxShadow: '0 2px 4px rgba(0,0,0,0.2)'
+          }}
+        >
+          <span>{getRoleIcon(userRole)}</span>
+          <span>
+            {userRole === "edition" ? "Edition" : 
+             userRole === "reading" ? "Reader" : "No access"}
+          </span>
+        </div>
+      )}
+
+      {/* Avatares de contribuyentes */}
+      <div style={{
+        position: 'fixed',
+        top: '10px',
+        left: menuOpen ? '280px' : '80px', // Se ajusta según el estado del menú
+        padding: '8px 15px',
+        display: 'flex',
+        gap: '8px',
+        zIndex: 1000,
+        backgroundColor: 'white',
+        borderRadius: '15px',
+        boxShadow: '0 2px 10px rgba(0,0,0,0.1)',
+        transition: 'left 0.3s ease', // Animación suave al abrir/cerrar menú
+        alignItems: 'center'
+      }}>
+        <span style={{ 
+          marginRight: '8px', 
+          fontSize: '14px', 
+          color: '#666',
+          fontWeight: '500' 
+        }}>
+          Contributors:
+        </span>
+        {contributors.map((contributor, index) => (
+          <div
+            key={index}
+            title={contributor.email}
+            style={{
+              width: '32px',
+              height: '32px',
+              borderRadius: '50%',
+              backgroundColor: getRandomColor(contributor.email),
+              color: 'white',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              fontSize: '14px',
+              fontWeight: 'bold',
+              cursor: 'pointer',
+              transition: 'transform 0.2s'
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.transform = 'scale(1.1)';
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.transform = 'scale(1)';
+            }}
+          >
+            {getInitials(contributor.email)}
+          </div>
+        ))}
+      </div>
+
       <div id="board-container" className={`board-content ${menuOpen ? "menu-open" : "menu-closed"}`}></div>
     </div>
   );
