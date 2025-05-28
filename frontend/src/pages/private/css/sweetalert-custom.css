@@ -1,0 +1,138 @@
+/* Estilos personalizados para SweetAlert */
+.swal2-popup {
+    border-radius: 15px !important;
+    padding: 2em !important;
+}
+
+.swal2-title {
+    color: #2c3e50 !important;
+    font-size: 1.5em !important;
+    font-weight: 600 !important;
+    margin-bottom: 1.5em !important;
+}
+
+/* Estilos para los inputs */
+.swal2-input, .swal2-textarea {
+    border: 2px solid #e9ecef !important;
+    border-radius: 10px !important;
+    padding: 12px !important;
+    margin-top: 5px !important;
+    font-size: 14px !important;
+    transition: all 0.3s ease !important;
+}
+
+.swal2-input:focus, .swal2-textarea:focus {
+    border-color: #3498db !important;
+    box-shadow: 0 0 0 2px rgba(52, 152, 219, 0.2) !important;
+}
+
+/* Estilos para los contenedores de selección */
+.contributor-selector {
+    max-height: 250px;
+    overflow-y: auto;
+    border: 1px solid #e4e4e4;
+    border-radius: 12px;
+    padding: 15px;
+    background-color: #f8f9fa;
+    margin: 15px 0;
+}
+
+/* Estilos para los items de contribuyentes */
+.contributor-item {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-radius: 8px;
+    margin: 5px 0;
+    transition: background-color 0.2s;
+    cursor: pointer;
+}
+
+.contributor-item:hover {
+    background-color: #e9ecef;
+}
+
+/* Estilos para los checkboxes */
+.contributor-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+/* Estilos para los avatares */
+.contributor-avatar {
+    width: 32px;
+    height: 32px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: white;
+    font-weight: bold;
+    margin-right: 10px;
+    border: 2px solid white;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+}
+
+/* Estilos para las etiquetas */
+.form-label {
+    color: #34495e;
+    font-weight: 600;
+    margin-bottom: 8px;
+    display: block;
+}
+
+/* Estilos para los botones */
+.swal2-confirm {
+    background-color: #3498db !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+}
+
+.swal2-deny {
+    background-color: #e74c3c !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+}
+
+.swal2-cancel {
+    background-color: #95a5a6 !important;
+    border-radius: 8px !important;
+    padding: 12px 24px !important;
+    font-weight: 600 !important;
+}
+
+/* Estilos para el botón de seleccionar todos */
+.select-all-container {
+    display: flex;
+    align-items: center;
+    padding: 10px;
+    border-bottom: 2px solid #e4e4e4;
+    margin-bottom: 10px;
+}
+
+.select-all-checkbox {
+    width: 18px;
+    height: 18px;
+    margin-right: 12px;
+    cursor: pointer;
+}
+
+.select-all-label {
+    font-weight: 600;
+    color: #2c3e50;
+    cursor: pointer;
+}
+
+/* Animaciones */
+@keyframes scaleIn {
+    from { transform: scale(0.9); opacity: 0; }
+    to { transform: scale(1); opacity: 1; }
+}
+
+.swal2-show {
+    animation: scaleIn 0.3s ease-out;
+} 
