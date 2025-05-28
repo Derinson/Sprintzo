@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import "./css/board.css";
+import "./css/sweetalert-custom.css"; // Importamos los estilos personalizados para SweetAlert
 import MenuDashboard from "./MenuDashboard"; // Importamos el menú
 import Swal from "sweetalert2"; // Importamos SweetAlert
 
@@ -135,13 +136,30 @@ function Board() {
                 const cardId = e.dataTransfer.getData("text/plain");
                 const newColumn = container.id.replace("-tasks", "");
 
+                // Primero obtener la tarjeta actual para mantener sus datos
                 fetch(`http://localhost:5000/api/cards/${cardId}`, {
-                  method: "PUT",
+                  method: "GET",
                   headers: {
-                    "Content-Type": "application/json"
-                  },
-                  body: JSON.stringify({ column: newColumn })
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  }
                 })
+                .then(res => res.json())
+                .then(currentCard => {
+                  // Actualizar la tarjeta manteniendo todos sus datos excepto la columna
+                  fetch(`http://localhost:5000/api/cards/${cardId}`, {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: JSON.stringify({
+                      title: currentCard.title,
+                      responsible: currentCard.responsible,
+                      description: currentCard.description,
+                      column: newColumn
+                    })
+                  })
                   .then(res => {
                     if (!res.ok) throw new Error("Error al mover la tarjeta");
                     return res.json();
@@ -156,8 +174,13 @@ function Board() {
                   })
                   .catch(err => {
                     console.error(err);
-                    alert("No se pudo mover la tarjeta");
+                    Swal.fire('Error', 'No se pudo mover la tarjeta', 'error');
                   });
+                })
+                .catch(err => {
+                  console.error(err);
+                  Swal.fire('Error', 'No se pudo obtener la información de la tarjeta', 'error');
+                });
               });
             });
           });
@@ -187,35 +210,63 @@ function Board() {
         }
 
         Swal.fire({
-          title: "Task Title",
+          title: '<h2 class="swal2-title">New Task</h2>',
           input: "text",
           inputPlaceholder: "Enter title",
           showCancelButton: true,
           confirmButtonText: 'Next',
-          cancelButtonText: 'Cancel'
+          cancelButtonText: 'Cancel',
         }).then(titleResult => {
           if (!titleResult.value) return;
 
           Swal.fire({
-            title: "Assign Responsible",
-            input: "select",
-            inputOptions: {
-              "": "🔹 Unassigned",
-              ...Object.fromEntries(contribuyentes.map(c => [c.email, `${c.email} `]))
-            },
+            title: '<h2 class="swal2-title">Assign Responsibles</h2>',
+            html: `
+              <div class="contributor-selector">
+                ${contribuyentes.map(c => `
+                  <div class="contributor-item">
+                    <input type="checkbox" 
+                           id="check-${c.email}" 
+                           value="${c.email}" 
+                           class="contributor-checkbox">
+                    <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
+                      ${getInitials(c.email)}
+                    </div>
+                    <label for="check-${c.email}">${c.email}</label>
+                  </div>
+                `).join('')}
+                <div class="contributor-item unassigned">
+                  <div class="contributor-avatar" style="background-color: #95a5a6">
+                    UA
+                  </div>
+                  <span class="unassigned-label">Unassigned (default)</span>
+                </div>
+              </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Next',
-            cancelButtonText: 'Cancel'
+            cancelButtonText: 'Cancel',
+            preConfirm: () => {
+              const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+              const selectedResponsibles = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.value)
+                : ['Unassigned'];
+              
+              return {
+                title: titleResult.value,
+                responsible: selectedResponsibles
+              };
+            }
           }).then(responsibleResult => {
-            if (responsibleResult.dismiss) return;
+            if (!responsibleResult.value) return;
 
             Swal.fire({
-              title: "Task Description",
-              input: "text",
+              title: '<h2 class="swal2-title">Task Description</h2>',
+              input: "textarea",
               inputPlaceholder: "Enter description",
               showCancelButton: true,
               confirmButtonText: 'Create',
-              cancelButtonText: 'Cancel'
+              cancelButtonText: 'Cancel',
             }).then(descriptionResult => {
               if (!descriptionResult.value) return;
 
@@ -229,27 +280,43 @@ function Board() {
                   "Authorization": `Bearer ${token}`
                 },
                 body: JSON.stringify({
-                  title: titleResult.value,
-                  responsible: responsibleResult.value || "Unassigned",
+                  title: responsibleResult.value.title,
+                  responsible: responsibleResult.value.responsible,
                   description: descriptionResult.value,
                   column: columnChoice,
                   boardId
                 })
               })
-                .then(res => res.json())
-                .then(() => {
-                  Swal.fire("Saved!", "The card has been created successfully.", "success");
-                  fetch(`http://localhost:5000/api/cards/board/${boardId}`)
-                    .then(res => res.json())
-                    .then(cards => {
-                      clearAllTasks();
-                      cards.forEach(renderCard);
-                    });
-                })
-                .catch(err => {
-                  console.error(err);
-                  Swal.fire("Error", "Could not save the task in the database.", "error");
+              .then(res => {
+                if (!res.ok) throw new Error('Error saving task');
+                return res.json();
+              })
+              .then(() => {
+                Swal.fire({
+                  title: "Saved!",
+                  text: "Task has been created successfully",
+                  icon: "success",
+                  timer: 1500,
+                  timerProgressBar: true,
+                  showConfirmButton: false
                 });
+                
+                // Reload tasks
+                fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+                  .then(res => res.json())
+                  .then(cards => {
+                    clearAllTasks();
+                    cards.forEach(renderCard);
+                  });
+              })
+              .catch(err => {
+                console.error(err);
+                Swal.fire({
+                  title: "Error",
+                  text: "Could not save task to database",
+                  icon: "error"
+                });
+              });
             });
           });
         });
@@ -272,22 +339,113 @@ function Board() {
     contentDiv.className = "task-content";
     contentDiv.style.cursor = "pointer";
     contentDiv.style.transition = "background-color 0.3s ease";
+    contentDiv.style.position = "relative"; // Para posicionamiento absoluto de los avatares
+
+    // Header container para título y avatares
+    const headerContainer = document.createElement("div");
+    headerContainer.style.display = "flex";
+    headerContainer.style.justifyContent = "space-between";
+    headerContainer.style.alignItems = "flex-start";
+    headerContainer.style.marginBottom = "12px";
 
     const titleElement = document.createElement("h3");
     titleElement.className = "titl";
     titleElement.textContent = `📌 ${card.title}`;
+    titleElement.style.margin = "0";
+    titleElement.style.fontSize = "16px";
+    titleElement.style.fontWeight = "600";
+    titleElement.style.color = "#2c3e50";
+    titleElement.style.flex = "1";
+    titleElement.style.marginRight = "10px";
 
-    const responsibleElement = document.createElement("p");
-    responsibleElement.className = "responsible";
-    responsibleElement.textContent = `👤 ${card.responsible}`;
+    // Contenedor de avatares
+    const responsibleContainer = document.createElement("div");
+    responsibleContainer.style.display = "flex";
+    responsibleContainer.style.alignItems = "center";
+    responsibleContainer.style.gap = "4px";
+    responsibleContainer.style.flexWrap = "wrap";
+    responsibleContainer.style.minWidth = "fit-content";
+
+    const responsibles = Array.isArray(card.responsible) ? card.responsible : [card.responsible];
+    
+    // Contenedor para los avatares
+    const avatarsContainer = document.createElement("div");
+    avatarsContainer.style.display = "flex";
+    avatarsContainer.style.gap = "2px";
+    avatarsContainer.style.flexDirection = "row-reverse"; // Para que se apilen desde la derecha
+
+    responsibles.forEach(responsible => {
+        const avatarContainer = document.createElement("div");
+        avatarContainer.style.position = "relative";
+        avatarContainer.style.display = "inline-block";
+        avatarContainer.style.marginLeft = "-8px"; // Para que los avatares se superpongan ligeramente
+
+        const avatar = document.createElement("div");
+        avatar.style.width = "24px";
+        avatar.style.height = "24px";
+        avatar.style.borderRadius = "50%";
+        avatar.style.backgroundColor = getRandomColor(responsible);
+        avatar.style.color = "white";
+        avatar.style.display = "flex";
+        avatar.style.alignItems = "center";
+        avatar.style.justifyContent = "center";
+        avatar.style.fontSize = "11px";
+        avatar.style.fontWeight = "bold";
+        avatar.style.cursor = "pointer";
+        avatar.style.border = "2px solid white";
+        avatar.style.boxSizing = "border-box";
+        avatar.textContent = getInitials(responsible);
+
+        // Tooltip para mostrar el email completo
+        avatar.title = responsible;
+
+        // Efecto hover
+        avatar.onmouseover = () => {
+            avatar.style.transform = "scale(1.1)";
+            avatar.style.transition = "transform 0.2s ease";
+            avatar.style.zIndex = "1";
+        };
+        avatar.onmouseout = () => {
+            avatar.style.transform = "scale(1)";
+            avatar.style.zIndex = "0";
+        };
+
+        avatarContainer.appendChild(avatar);
+        avatarsContainer.appendChild(avatarContainer);
+    });
+
+    responsibleContainer.appendChild(avatarsContainer);
+    headerContainer.appendChild(titleElement);
+    headerContainer.appendChild(responsibleContainer);
+
+    // Contenedor de descripción con icono
+    const descriptionContainer = document.createElement("div");
+    descriptionContainer.style.marginTop = "8px";
+    descriptionContainer.style.display = "flex";
+    descriptionContainer.style.gap = "8px";
+    descriptionContainer.style.alignItems = "flex-start";
+    descriptionContainer.style.backgroundColor = "#f8f9fa";
+    descriptionContainer.style.padding = "8px";
+    descriptionContainer.style.borderRadius = "6px";
+
+    const descriptionIcon = document.createElement("span");
+    descriptionIcon.textContent = "📝";
+    descriptionIcon.style.fontSize = "14px";
 
     const descriptionElement = document.createElement("p");
     descriptionElement.className = "description";
+    descriptionElement.style.margin = "0";
+    descriptionElement.style.fontSize = "14px";
+    descriptionElement.style.color = "#495057";
+    descriptionElement.style.flex = "1";
+    descriptionElement.style.lineHeight = "1.4";
     descriptionElement.textContent = card.description;
 
-    contentDiv.appendChild(titleElement);
-    contentDiv.appendChild(responsibleElement);
-    contentDiv.appendChild(descriptionElement);
+    descriptionContainer.appendChild(descriptionIcon);
+    descriptionContainer.appendChild(descriptionElement);
+
+    contentDiv.appendChild(headerContainer);
+    contentDiv.appendChild(descriptionContainer);
 
     contentDiv.style.backgroundColor = "transparent";
 
@@ -311,47 +469,54 @@ function Board() {
         }
 
         Swal.fire({
-          title: '<h2 style="color: #2c3e50; font-size: 24px; margin-bottom: 20px;">✏️ Edit Card</h2>',
+          title: '<h2 class="swal2-title">✏️ Edit Task</h2>',
           html: `
             <div style="text-align: left; padding: 10px;">
               <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
+                <label class="form-label">
                   📝 Title:
                 </label>
                 <input 
                   id="swal-input-title" 
                   class="swal2-input" 
                   value="${card.title}"
-                  style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px;"
                 >
               </div>
               
               <div class="form-group" style="margin-bottom: 20px;">
-                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
-                  👤 Responsible:
+                <label class="form-label">
+                  👥 Responsibles:
                 </label>
-                <select 
-                  id="swal-input-responsible" 
-                  class="swal2-select"
-                  style="width: 100%; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; background-color: white;"
-                >
-                  <option value="">🔹 Unassigned</option>
+                <div class="contributor-selector">
+                  <div class="contributor-item unassigned">
+                    <div class="contributor-avatar" style="background-color: #95a5a6">
+                      UA
+                    </div>
+                    <span class="unassigned-label">Unassigned (default)</span>
+                  </div>
                   ${contribuyentes.map(c => `
-                    <option value="${c.email}" ${c.email === card.responsible ? "selected" : ""}>
-                      ${c.email}
-                    </option>
-                  `).join("")}
-                </select>
+                    <div class="contributor-item">
+                      <input type="checkbox" 
+                             id="edit-check-${c.email}" 
+                             value="${c.email}" 
+                             class="contributor-checkbox"
+                             ${Array.isArray(card.responsible) && card.responsible.includes(c.email) ? 'checked' : ''}>
+                      <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
+                        ${getInitials(c.email)}
+                      </div>
+                      <label for="edit-check-${c.email}">${c.email}</label>
+                    </div>
+                  `).join('')}
+                </div>
               </div>
 
-              <div class="form-group" style="margin-bottom: 10px;">
-                <label style="display: block; color: #34495e; font-weight: 600; margin-bottom: 8px;">
+              <div class="form-group">
+                <label class="form-label">
                   📄 Description:
                 </label>
                 <textarea 
                   id="swal-input-description" 
                   class="swal2-textarea"
-                  style="width: 100%; min-height: 100px; padding: 8px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; resize: vertical;"
                 >${card.description}</textarea>
               </div>
             </div>
@@ -361,11 +526,18 @@ function Board() {
           confirmButtonText: 'Save',
           denyButtonText: 'Delete',
           cancelButtonText: 'Cancel',
-          confirmButtonColor: '#3085d6',
-          denyButtonColor: '#dc3545',
-          cancelButtonColor: '#6c757d',
-          width: '600px',
-          focusConfirm: false
+          preConfirm: () => {
+            const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+            const selectedResponsibles = selectedCheckboxes.length > 0 
+              ? Array.from(selectedCheckboxes).map(cb => cb.value)
+              : ['Unassigned'];
+            
+            return {
+              title: document.getElementById('swal-input-title').value,
+              responsible: selectedResponsibles,
+              description: document.getElementById('swal-input-description').value
+            };
+          }
         }).then((result) => {
           if (result.isConfirmed) {
             fetch(`http://localhost:5000/api/cards/${card._id}`, {
@@ -374,18 +546,14 @@ function Board() {
                 "Content-Type": "application/json",
                 "Authorization": `Bearer ${localStorage.getItem("token")}`
               },
-              body: JSON.stringify({
-                title: document.getElementById("swal-input-title").value,
-                responsible: document.getElementById("swal-input-responsible").value || "Unassigned",
-                description: document.getElementById("swal-input-description").value
-              })
+              body: JSON.stringify(result.value)
             })
             .then(response => {
               if (!response.ok) throw new Error('Error updating');
               
               Swal.fire({
                 title: "Changes saved!",
-                text: "The card has been updated successfully",
+                text: "Task has been updated successfully",
                 icon: "success",
                 timer: 1500,
                 timerProgressBar: true,
@@ -395,17 +563,17 @@ function Board() {
               });
             })
             .catch(() => {
-              Swal.fire('Error', 'Could not update the card', 'error');
+              Swal.fire('Error', 'Could not update task', 'error');
             });
           } else if (result.isDenied) {
             Swal.fire({
               title: 'Are you sure?',
-              text: "This action cannot be undone",
+              text: "You won't be able to revert this!",
               icon: 'warning',
               showCancelButton: true,
               confirmButtonColor: '#dc3545',
               cancelButtonColor: '#6c757d',
-              confirmButtonText: 'Yes, delete it',
+              confirmButtonText: 'Yes, delete it!',
               cancelButtonText: 'Cancel'
             }).then((confirmResult) => {
               if (confirmResult.isConfirmed) {
@@ -419,10 +587,10 @@ function Board() {
                   if (!response.ok) throw new Error('Error deleting');
                   
                   div.remove();
-                  Swal.fire('Deleted!', 'The card has been deleted', 'success');
+                  Swal.fire('Deleted!', 'Task has been deleted', 'success');
                 })
                 .catch(() => {
-                  Swal.fire('Error', 'Could not delete the card', 'error');
+                  Swal.fire('Error', 'Could not delete task', 'error');
                 });
               }
             });
