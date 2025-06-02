@@ -28,7 +28,18 @@ router.post('/', async (req, res) => {
 // Obtener tarjetas de un tablero específico
 router.get('/board/:boardId', async (req, res) => {
     try {
-        const cards = await Card.find({ boardId: req.params.boardId });
+        const { archived } = req.query; // Obtener el parámetro de consulta
+        const query = { boardId: req.params.boardId };
+        
+        // Si se especifica archived, filtrar por ese valor
+        if (archived !== undefined) {
+            query.archived = archived === 'true';
+        } else {
+            // Por defecto, mostrar solo las tarjetas no archivadas
+            query.archived = false;
+        }
+        
+        const cards = await Card.find(query);
         res.status(200).json(cards);
     } catch (error) {
         res.status(500).json({ error: "Error al obtener las tarjetas" });
@@ -72,6 +83,42 @@ router.put('/:id', async (req, res) => {
         res.json(updatedCard);
     } catch (error) {
         res.status(500).json({ error: "Error al actualizar la tarjeta" });
+    }
+});
+
+// Archivar una tarjeta
+router.put('/:id/archive', async (req, res) => {
+    try {
+        const updatedCard = await Card.findByIdAndUpdate(
+            req.params.id,
+            { 
+                archived: true,
+                archivedAt: new Date()
+            },
+            { new: true }
+        );
+        if (!updatedCard) return res.status(404).json({ error: "Tarjeta no encontrada" });
+        res.json(updatedCard);
+    } catch (error) {
+        res.status(500).json({ error: "Error al archivar la tarjeta" });
+    }
+});
+
+// Desarchivar una tarjeta
+router.put('/:id/unarchive', async (req, res) => {
+    try {
+        const updatedCard = await Card.findByIdAndUpdate(
+            req.params.id,
+            { 
+                archived: false,
+                archivedAt: null
+            },
+            { new: true }
+        );
+        if (!updatedCard) return res.status(404).json({ error: "Tarjeta no encontrada" });
+        res.json(updatedCard);
+    } catch (error) {
+        res.status(500).json({ error: "Error al desarchivar la tarjeta" });
     }
 });
 

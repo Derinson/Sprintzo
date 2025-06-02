@@ -4,6 +4,7 @@ import logo from "../../pages/logo_Sprintzo.png";
 
 const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
   const [username, setUsername] = useState(""); // Para almacenar el nombre del usuario
+  const [archivedCount, setArchivedCount] = useState(0); // Contador de tableros con archivados
 
   useEffect(() => {
     // Función para obtener el username
@@ -27,7 +28,27 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
       }
     };
 
-    fetchUsername(); // Llama a la función para obtener el username
+    // Función para obtener el conteo de tableros con archivados
+    const fetchArchivedBoards = async () => {
+      try {
+        const response = await fetch("http://localhost:5000/tablerosRoutes/with-archived", {
+          headers: {
+            Authorization: `Bearer ${localStorage.getItem("token")}`,
+          },
+        });
+
+        const data = await response.json();
+        if (response.status === 200) {
+          setArchivedCount(data.count || 0);
+        }
+      } catch (error) {
+        console.error("Error:", error);
+        setArchivedCount(0);
+      }
+    };
+
+    fetchUsername();
+    fetchArchivedBoards(); // Obtiene el conteo de tableros con archivados
 
     // Configuración del toggle para abrir/cerrar el menú
     const toggle = document.querySelector(".menu-toggle");
@@ -80,9 +101,18 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
           <i className="bx bx-message-square"></i>
           <span>Mensajes</span>
         </div>
-        <div className="enlace">
-          <i className="bx bx-file"></i>
-          <span>Archivos</span>
+        <div 
+          className="enlace" 
+          onClick={() => (window.location.href = "/archived-boards")}
+          style={{ position: 'relative' }}
+        >
+          <i className="bx bx-archive"></i>
+          <span>Archivados</span>
+          {archivedCount > 0 && (
+            <div className="archived-badge">
+              {archivedCount}
+            </div>
+          )}
         </div>
         <div className="enlace">
           <i className="bx bx-cog"></i>

@@ -8,6 +8,7 @@ import Inicio from "./pages/Inicio";
 import Board from "./pages/private/Board"; // Ahora está en una ruta privada
 import Crud from "./pages/private/Crud"; // Ahora está en una ruta privada
 import UserProfile from "./pages/private/UserProfile";
+import ArchivedBoards from "./pages/private/ArchivedBoards"; // Importamos el nuevo componente
 
 
 function App() {
@@ -49,6 +50,15 @@ function App() {
           element={
             <PrivateRoute>
               <UserProfile />
+            </PrivateRoute>
+          }
+        />
+
+        <Route
+          path="/archived-boards"
+          element={
+            <PrivateRoute>
+              <ArchivedBoards />
             </PrivateRoute>
           }
         />

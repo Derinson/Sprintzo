@@ -267,7 +267,25 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
         <div className="tableros">
           {tablerosCompartidos.map((tablero) => (
             <div key={tablero._id} className="tablero">
-              <h3>{tablero.nombre} <span className="contador">({tablero.contribuyentes.length})</span></h3>
+              <h3>
+                {tablero.nombre} 
+                <span 
+                  className="contador" 
+                  onMouseEnter={() => handleMouseEnter(tablero._id)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  ({tablero.contribuyentes.length})
+                </span>
+              </h3>
+
+              {hoveredTablero === tablero._id && (
+                <div className="contribuyentes-list">
+                  {tablero.contribuyentes.map(contribuyente => (
+                    <p key={contribuyente.email}>{contribuyente.email}</p>
+                  ))}
+                </div>
+              )}
+
               <button onClick={() => abrirTablero(tablero._id)}>Open</button>
             </div>
           ))}

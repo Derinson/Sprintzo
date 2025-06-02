@@ -2,6 +2,7 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const Tablero = require("../models/Tablero");
 const User = require("../models/userModel");
+const Card = require("../models/Card");
 const router = express.Router();
 
 // 📌 Middleware de autenticación
@@ -189,6 +190,52 @@ router.get("/:boardId/mi-rol", verifyToken, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Error al verificar rol en el tablero" });
+  }
+});
+
+// 📌 Obtener tableros con tarjetas archivadas
+router.get("/with-archived", verifyToken, async (req, res) => {
+  try {
+    // Primero obtenemos todos los tableros del usuario (creados y compartidos)
+    const tableros = await Tablero.find({
+      $or: [
+        { creadoPor: req.user.id },
+        { "contribuyentes.usuario": req.user.id }
+      ]
+    });
+
+    // Obtenemos las tarjetas archivadas para cada tablero
+    const boardsWithArchived = await Promise.all(
+      tableros.map(async (tablero) => {
+        const archivedCards = await Card.find({
+          boardId: tablero._id,
+          archived: true
+        });
+
+        if (archivedCards.length > 0) {
+          // Si el tablero tiene tarjetas archivadas, lo incluimos con información adicional
+          return {
+            _id: tablero._id,
+            name: tablero.nombre,
+            description: tablero.descripcion || "Sin descripción",
+            archivedCount: archivedCards.length,
+            lastArchivedDate: Math.max(...archivedCards.map(card => new Date(card.archivedAt)))
+          };
+        }
+        return null;
+      })
+    );
+
+    // Filtramos los tableros que no tienen tarjetas archivadas
+    const filteredBoards = boardsWithArchived.filter(board => board !== null);
+
+    res.json({
+      count: filteredBoards.length,
+      boards: filteredBoards
+    });
+  } catch (error) {
+    console.error("Error al obtener tableros con archivados:", error);
+    res.status(500).json({ message: "🚨 Error al obtener tableros con archivados", error });
   }
 });
 
