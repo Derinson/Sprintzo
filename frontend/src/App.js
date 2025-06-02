@@ -6,7 +6,6 @@ import Dashboard from "./pages/private/Dashboard";
 import PrivateRoute from "./pages/private/PrivateRoute"; // Protege rutas privadas
 import Inicio from "./pages/Inicio";
 import Board from "./pages/private/Board"; // Ahora está en una ruta privada
-import Crud from "./pages/private/Crud"; // Ahora está en una ruta privada
 import UserProfile from "./pages/private/UserProfile";
 import ArchivedBoards from "./pages/private/ArchivedBoards"; // Importamos el nuevo componente
 
@@ -36,15 +35,7 @@ function App() {
             </PrivateRoute>
           }
         />
-        <Route
-          path="/crud"
-          element={
-            <PrivateRoute>
-              <Crud />
-            </PrivateRoute>
-          }
-        />
-
+     
            <Route
           path="/profile"
           element={

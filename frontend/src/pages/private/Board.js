@@ -731,39 +731,39 @@ function Board() {
       contentDiv.addEventListener("click", () => {
         // Mostrar vista de solo lectura para tarjetas archivadas
         Swal.fire({
-          title: '<h2 class="swal2-title">📄 Tarjeta Archivada</h2>',
+          title: '<h2 class="swal2-title">📄 Archived Card</h2>',
           html: `
             <div style="text-align: left; padding: 10px;">
               <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="font-weight: bold;">
-                  📝 Título:
+                  📝 Title:
                 </label>
                 <p>${card.title}</p>
               </div>
               
               <div class="form-group" style="margin-bottom: 20px;">
                 <label class="form-label" style="font-weight: bold;">
-                  👥 Responsables:
+                  👥 Responsible:
                 </label>
                 <p>${Array.isArray(card.responsible) ? card.responsible.join(', ') : card.responsible}</p>
               </div>
 
               <div class="form-group">
                 <label class="form-label" style="font-weight: bold;">
-                  📄 Descripción:
+                  📄 Description:
                 </label>
                 <p>${card.description}</p>
               </div>
 
               <div class="form-group" style="margin-top: 20px;">
                 <label class="form-label" style="font-weight: bold;">
-                  🗃️ Archivada el:
+                  🗃️ Archived on:
                 </label>
                 <p>${new Date(card.archivedAt).toLocaleString()}</p>
               </div>
             </div>
           `,
-          confirmButtonText: 'Cerrar',
+          confirmButtonText: 'Close',
           confirmButtonColor: '#6c757d'
         });
       });

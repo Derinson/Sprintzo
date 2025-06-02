@@ -254,7 +254,7 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
                 <div className="dropdown-menu" style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}>
                   <button onClick={() => editarTablero(tablero._id, tablero.nombre, tablero.contribuyentes)}>Edit</button>
                   <button>Delete</button>
-                  <button onClick={() => agregarContribuyente(tablero._id)}>Add taxpayer</button>
+                  <button onClick={() => agregarContribuyente(tablero._id)}>Add contributor</button>
                 </div>
               )}
 

@@ -89,25 +89,16 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
           <i className="bx bx-user"></i>
           <span>Profile</span>
         </div>
-        <div className="enlace" onClick={() => (window.location.href = "/crud")}>
-          <i className="bx bx-notepad"></i>
-          <span>Board</span>
-        </div>
-        <div className="enlace">
-          <i className="bx bx-line-chart"></i>
-          <span>Analíticas</span>
-        </div>
-        <div className="enlace">
-          <i className="bx bx-message-square"></i>
-          <span>Mensajes</span>
-        </div>
+       
+       
+       
         <div 
           className="enlace" 
           onClick={() => (window.location.href = "/archived-boards")}
           style={{ position: 'relative' }}
         >
           <i className="bx bx-archive"></i>
-          <span>Archivados</span>
+          <span>Archived</span>
           {archivedCount > 0 && (
             <div className="archived-badge">
               {archivedCount}
@@ -116,11 +107,11 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
         </div>
         <div className="enlace">
           <i className="bx bx-cog"></i>
-          <span>Configuración</span>
+          <span>Settings</span>
         </div>
         <div className="enlace" id="logout-icon" onClick={handleLogout}>
           <i className="bx bx-log-out"></i>
-          <span>Cerrar sesión</span>
+          <span>Log out</span>
         </div>
       </div>
     </div>

@@ -48,14 +48,14 @@ function ArchivedBoards() {
       />
 
       <div className={`archived-boards-content ${menuOpen ? 'menu-open' : 'menu-closed'}`}>
-        <h1>📦 Tableros con Tarjetas Archivadas</h1>
+        <h1>📦 Boards with Archived Cards</h1>
         
         {loading ? (
-          <div className="loading-spinner">Cargando...</div>
+          <div className="loading-spinner">Loading...</div>
         ) : boards.length === 0 ? (
           <div className="no-archived">
             <i className="bx bx-archive"></i>
-            <p>No hay tableros con tarjetas archivadas</p>
+            <p>No boards with archived cards</p>
           </div>
         ) : (
           <div className="boards-grid">
@@ -63,12 +63,12 @@ function ArchivedBoards() {
               <div key={board._id} className="board-card" onClick={() => window.location.href = `/board/${board._id}`}>
                 <div className="board-header">
                   <h3>{board.name}</h3>
-                  <span className="archived-count">{board.archivedCount} archivadas</span>
+                  <span className="archived-count">{board.archivedCount} archived</span>
                 </div>
                 <div className="board-info">
                   <p>{board.description}</p>
                   <div className="last-archived">
-                    Última archivada: {new Date(board.lastArchivedDate).toLocaleDateString()}
+                    Last archived: {new Date(board.lastArchivedDate).toLocaleDateString()}
                   </div>
                 </div>
               </div>
