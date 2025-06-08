@@ -1,10 +1,11 @@
 import React, { useEffect, useState } from "react";
 import "./css/menu.css"; 
 import logo from "../../pages/logo_Sprintzo.png";
+import NotificacionesCampana from "../../components/NotificacionesCampana";
 
 const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
-  const [username, setUsername] = useState(""); // Para almacenar el nombre del usuario
-  const [archivedCount, setArchivedCount] = useState(0); // Contador de tableros con archivados
+  const [username, setUsername] = useState("");
+  const [archivedCount, setArchivedCount] = useState(0);
 
   useEffect(() => {
     // Función para obtener el username
@@ -73,9 +74,10 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
         <div className="logo">
           <img src={logo} alt="logo" />
           <div className="username">
-            <span>Hello, {username}</span> {/* Aquí se muestra el username */}
+            <span>Hello, {username}</span>
           </div>
         </div>
+        <NotificacionesCampana />
         <div className="menu-toggle">
           <i className={`bx ${menuOpen ? "bx-menu" : "bx-x"}`}></i>
         </div>
@@ -89,9 +91,9 @@ const MenuDashboard = ({ handleLogout, toggleMenu, menuOpen }) => {
           <i className="bx bx-user"></i>
           <span>Profile</span>
         </div>
-       
-       
-       
+        
+        
+        
         <div 
           className="enlace" 
           onClick={() => (window.location.href = "/archived-boards")}

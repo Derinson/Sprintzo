@@ -46,9 +46,12 @@ function ArchivedBoards() {
         toggleMenu={toggleMenu}
         menuOpen={menuOpen}
       />
-
-      <div className={`archived-boards-content ${menuOpen ? 'menu-open' : 'menu-closed'}`}>
-        <h1>📦 Boards with Archived Cards</h1>
+      
+      <div className="archived-content">
+        <h1 className="archived-title">
+          <i className='bx bx-archive'></i>
+          Boards with Archived Cards
+        </h1>
         
         {loading ? (
           <div className="loading-spinner">Loading...</div>

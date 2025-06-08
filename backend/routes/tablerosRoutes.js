@@ -3,6 +3,7 @@ const jwt = require("jsonwebtoken");
 const Tablero = require("../models/Tablero");
 const User = require("../models/userModel");
 const Card = require("../models/Card");
+const Notificacion = require("../models/Notificacion");
 const router = express.Router();
 
 // 📌 Middleware de autenticación
@@ -99,6 +100,16 @@ router.post("/contribuyente/:id", verifyToken, async (req, res) => {
     tablero.contribuyentes.push({ email, usuario: usuario._id, rol });
     await tablero.save();
 
+    // Crear notificación para el nuevo contribuyente
+    const creador = await User.findById(tablero.creadoPor);
+    const nuevaNotificacion = new Notificacion({
+      usuario: usuario._id,
+      mensaje: `${creador.email} te ha compartido el tablero "${tablero.nombre}" con rol de ${rol === 'edition' ? 'edición' : 'lectura'}`,
+      tipo: 'info',
+      tablero: tablero._id
+    });
+    await nuevaNotificacion.save();
+
     res.json({ message: `✅ Contribuyente ${email} agregado con rol ${rol}`, tablero });
   } catch (error) {
     res.status(500).json({ message: "🚨 Error al agregar contribuyente", error });
@@ -141,9 +152,26 @@ router.put("/:id", verifyToken, async (req, res) => {
     tablero.nombre = nombre;
 
     if (contribuyente && rol) {
-      const contribuyenteIndex = tablero.contribuyentes.findIndex(c => c.email.toString() === contribuyente);
+      const contribuyenteIndex = tablero.contribuyentes.findIndex(c => c.email === contribuyente);
       if (contribuyenteIndex !== -1) {
+        const rolAnterior = tablero.contribuyentes[contribuyenteIndex].rol;
         tablero.contribuyentes[contribuyenteIndex].rol = rol;
+
+        // Si el rol cambió, crear una notificación
+        if (rolAnterior !== rol) {
+          const creador = await User.findById(req.user.id);
+          const usuario = await User.findOne({ email: contribuyente });
+          
+          if (usuario) {
+            const nuevaNotificacion = new Notificacion({
+              usuario: usuario._id,
+              mensaje: `${creador.email} ha cambiado tu rol en el tablero "${tablero.nombre}" a ${rol === 'edition' ? 'edición' : 'lectura'}`,
+              tipo: 'info',
+              tablero: tablero._id
+            });
+            await nuevaNotificacion.save();
+          }
+        }
       }
     }
 

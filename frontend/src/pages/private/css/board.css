@@ -1,36 +1,26 @@
 .board-wrapper {
     display: flex;
-    height: 100vh;
-    overflow: hidden;
-  }
-  
-  .board-content {
-    flex-grow: 1;
+    min-height: 100vh;
+    background-color: var(--bg-body);
+}
+
+.board-content {
+    flex: 1;
     padding: 20px;
+    margin-left: 60px;
+    width: calc(100% - 60px);
+    transition: margin-left 0.3s ease, width 0.3s ease;
     overflow-x: auto;
-    width: 100%;
-  }
+}
 
-  .board-content.menu-open {
-    margin-left: 60px;
-    width: calc(100% - 60px);
-    transition: all 0.3s ease;
-  }
-
-  .board-content.menu-closed {
-    margin-left: 60px;
-    width: calc(100% - 60px);
-    transition: all 0.3s ease;
-  }
-
-  .board {
+.board {
     display: flex;
     gap: 20px;
-    padding: 0 20px;
     min-width: min-content;
-  }
-  
-  .column {
+    margin-top: 30px;
+}
+
+.column {
     background-color: #ebecf0;
     border-radius: 8px;
     padding: 15px;
@@ -39,53 +29,54 @@
     height: calc(100vh - 140px);
     display: flex;
     flex-direction: column;
-  }
-  
-  .column h2 {
+}
+
+.column h2 {
     margin-bottom: 10px;
     font-size: 20px;
     color: #333;
     padding: 10px;
     background: rgba(255, 255, 255, 0.5);
     border-radius: 6px;
-  }
-  
-  .task-container {
+}
+
+.task-container {
     flex: 1;
     padding: 10px;
     background-color: #ffffff;
     border-radius: 6px;
     overflow-y: auto;
-  }
+}
 
-  .board-header {
+.board-header {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    padding: 16px 24px;
     margin-bottom: 20px;
     flex-wrap: wrap;
     gap: 16px;
-  }
+    padding: 0;
+    margin-top: 30px;
+}
 
-  .contributors-section {
+.contributors-section {
     display: flex;
     align-items: center;
     gap: 8px;
-  }
+}
 
-  .contributors-label {
+.contributors-label {
     font-size: 14px;
     color: #666;
     font-weight: 500;
-  }
+}
 
-  .contributors-list {
+.contributors-list {
     display: flex;
     align-items: center;
-  }
+}
 
-  .contributor-avatar {
+.contributor-avatar {
     width: 32px;
     height: 32px;
     border-radius: 50%;
@@ -99,26 +90,26 @@
     transition: transform 0.2s ease;
     margin-left: -8px;
     cursor: pointer;
-  }
+}
 
-  .contributor-avatar:first-child {
+.contributor-avatar:first-child {
     margin-left: 0;
-  }
+}
 
-  .contributor-avatar:hover {
+.contributor-avatar:hover {
     transform: scale(1.1);
     z-index: 2;
-  }
+}
 
-  /* Contenedor de botones de acción */
-  .action-buttons-container {
+/* Contenedor de botones de acción */
+.action-buttons-container {
     display: flex;
     gap: 12px;
     align-items: center;
-  }
+}
 
-  /* Estilos comunes para los botones de acción */
-  .global-add-task-btn {
+/* Estilos comunes para los botones de acción */
+.global-add-task-btn {
     display: inline-flex;
     align-items: center;
     justify-content: center;
@@ -133,49 +124,49 @@
     text-transform: uppercase;
     letter-spacing: 0.5px;
     white-space: nowrap;
-  }
+}
 
-  /* Botón de agregar tarea */
-  .global-add-task-btn:first-child {
+/* Botón de agregar tarea */
+.global-add-task-btn:first-child {
     background-color: #2563eb;
     color: white;
     box-shadow: 0 2px 4px rgba(37, 99, 235, 0.2);
-  }
+}
 
-  .global-add-task-btn:first-child:hover {
+.global-add-task-btn:first-child:hover {
     background-color: #1d4ed8;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(37, 99, 235, 0.3);
-  }
+}
 
-  /* Botón de agregar columna */
-  .global-add-task-btn:nth-child(2) {
+/* Botón de agregar columna */
+.global-add-task-btn:nth-child(2) {
     background-color: #10b981;
     color: white;
     box-shadow: 0 2px 4px rgba(16, 185, 129, 0.2);
-  }
+}
 
-  .global-add-task-btn:nth-child(2):hover {
+.global-add-task-btn:nth-child(2):hover {
     background-color: #059669;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(16, 185, 129, 0.3);
-  }
+}
 
-  /* Botón de mostrar archivados */
-  #toggle-archived-btn {
+/* Botón de mostrar archivados */
+#toggle-archived-btn {
     background-color: #6b7280;
     color: white;
     box-shadow: 0 2px 4px rgba(107, 114, 128, 0.2);
-  }
+}
 
-  #toggle-archived-btn:hover {
+#toggle-archived-btn:hover {
     background-color: #4b5563;
     transform: translateY(-2px);
     box-shadow: 0 4px 8px rgba(107, 114, 128, 0.3);
-  }
+}
 
-  /* Etiqueta de rol */
-  .role-badge {
+/* Etiqueta de rol */
+.role-badge {
     position: fixed;
     top: 1px;
     right: 20px;
@@ -189,51 +180,51 @@
     gap: 6px;
     z-index: 1000;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
+}
 
-  .role-badge.edition {
+.role-badge.edition {
     background-color: #10b981;
-  }
+}
 
-  .role-badge.reading {
+.role-badge.reading {
     background-color: #6b7280;
-  }
+}
 
-  /* Iconos para los botones */
-  .global-add-task-btn::before {
+/* Iconos para los botones */
+.global-add-task-btn::before {
     font-size: 18px;
-  }
+}
 
-  .global-add-task-btn:first-child::before {
+.global-add-task-btn:first-child::before {
     content: "➕";
-  }
+}
 
-  .global-add-task-btn:nth-child(2)::before {
+.global-add-task-btn:nth-child(2)::before {
     content: "📊";
-  }
+}
 
-  /* Estilos para el scroll horizontal */
-  ::-webkit-scrollbar {
+/* Estilos para el scroll horizontal */
+::-webkit-scrollbar {
     height: 8px;
     width: 8px;
-  }
+}
 
-  ::-webkit-scrollbar-track {
+::-webkit-scrollbar-track {
     background: #f1f1f1;
     border-radius: 4px;
-  }
+}
 
-  ::-webkit-scrollbar-thumb {
+::-webkit-scrollbar-thumb {
     background: #888;
     border-radius: 4px;
-  }
+}
 
-  ::-webkit-scrollbar-thumb:hover {
+::-webkit-scrollbar-thumb:hover {
     background: #555;
-  }
+}
 
-  /* Tarjeta visual */
-  .task-card {
+/* Tarjeta visual */
+.task-card {
     background-color: #ffffff;
     border-radius: 12px;
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
@@ -241,14 +232,14 @@
     margin-bottom: 12px;
     transition: transform 0.2s ease, box-shadow 0.2s ease, opacity 0.3s ease;
     position: relative;
-  }
+}
 
-  .task-card.archived {
+.task-card.archived {
     opacity: 0.7;
     background-color: #f8f9fa;
-  }
+}
 
-  .archived-badge {
+.archived-badge {
     position: absolute;
     top: 8px;
     right: 8px;
@@ -257,30 +248,30 @@
     padding: 2px 6px;
     border-radius: 4px;
     font-size: 12px;
-  }
+}
 
-  .disabled-view {
+.disabled-view {
     pointer-events: none;
-  }
+}
 
-  .task-card:hover {
+.task-card:hover {
     transform: scale(1.02);
     box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
-  }
+}
 
-  /* Colores por columna */
-  #todo-tasks .task-card {
+/* Colores por columna */
+#todo-tasks .task-card {
     border-left: 5px solid #b3b3b3;
-  }
-  #doing-tasks .task-card {
+}
+#doing-tasks .task-card {
     border-left: 5px solid #2f7ddd;
-  }
-  #done-tasks .task-card {
+}
+#done-tasks .task-card {
     border-left: 5px solid #0bf5b7;
-  }
+}
 
-  /* Botones */
-  .edit-btn, .delete-btn {
+/* Botones */
+.edit-btn, .delete-btn {
     padding: 6px 12px;
     margin-right: 8px;
     font-size: 14px;
@@ -288,46 +279,46 @@
     border-radius: 6px;
     cursor: pointer;
     transition: background 0.2s ease;
-  }
+}
 
-  .edit-btn {
+.edit-btn {
     background-color: #0077C8;
     color: white;
-  }
+}
 
-  .edit-btn:hover {
+.edit-btn:hover {
     background-color: #00ADEF;
-  }
+}
 
-  .delete-btn {
+.delete-btn {
     background-color: #00D084; 
     color: white;
-  }
+}
 
-  .delete-btn:hover {
+.delete-btn:hover {
     background-color: #383522;
-  }
+}
 
-  /* Columnas */
-  .column {
+/* Columnas */
+.column {
     background-color: #f9fafb;
     padding: 12px;
     border-radius: 10px;
     margin-right: 16px;
     flex: 1;
     min-width: 250px;
-  }
+}
 
-  /* Contenedor de tablero */
-  #board {
+/* Contenedor de tablero */
+#board {
     display: flex;
     gap: 16px;
     padding: 16px;
     overflow-x: auto;
-  }
+}
 
-  /* Rol Banner */
-  .role-banner {
+/* Rol Banner */
+.role-banner {
     position: fixed;
     top: 0;
     right: 20px;
@@ -340,10 +331,10 @@
     align-items: center;
     gap: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.2);
-  }
+}
 
-  /* Contenedor de Colaboradores */
-  .contributors-container {
+/* Contenedor de Colaboradores */
+.contributors-container {
     position: fixed;
     top: 10px;
     padding: 8px 15px;
@@ -355,40 +346,40 @@
     box-shadow: 0 2px 10px rgba(0,0,0,0.1);
     transition: left 0.3s ease;
     align-items: center;
-  }
+}
 
-  .menu-open .contributors-container {
+.menu-open .contributors-container {
     left: 80px;
-  }
+}
 
-  .menu-closed .contributors-container {
+.menu-closed .contributors-container {
     left: 80px;
-  }
+}
 
-  /* Variables para elementos deshabilitados */
-  :root {
+/* Variables para elementos deshabilitados */
+:root {
     --action-disabled-opacity: 1;
     --action-disabled-cursor: pointer;
-  }
+}
 
-  /* Estilos para usuarios de solo lectura */
-  [data-role="reading"] .task-card {
+/* Estilos para usuarios de solo lectura */
+[data-role="reading"] .task-card {
     opacity: var(--action-disabled-opacity);
     cursor: var(--action-disabled-cursor);
     pointer-events: none;
-  }
+}
 
-  [data-role="reading"] .task-card:hover {
+[data-role="reading"] .task-card:hover {
     transform: none;
     box-shadow: 0 2px 8px rgba(0,0,0,0.1);
-  }
+}
 
-  [data-role="reading"] .task-buttons {
+[data-role="reading"] .task-buttons {
     display: none;
-  }
+}
 
-  /* Mensaje de solo lectura */
-  .read-only-banner {
+/* Mensaje de solo lectura */
+.read-only-banner {
     position: fixed;
     top: 60px;
     right: 20px;
@@ -402,18 +393,18 @@
     align-items: center;
     gap: 8px;
     box-shadow: 0 2px 4px rgba(0,0,0,0.1);
-  }
+}
 
-  .read-only-banner i {
+.read-only-banner i {
     font-size: 16px;
-  }
+}
 
-  /* Estilo para el menú lateral */
-  .menu-dashboard {
+/* Estilo para el menú lateral */
+.menu-dashboard {
     padding-top: 40px; /* Agregamos padding superior para bajar los iconos */
-  }
+}
 
-  .menu-dashboard a,
-  .menu-dashboard button {
+.menu-dashboard a,
+.menu-dashboard button {
     margin-top: 15px; /* Aumentamos el espacio entre los iconos */
-  }
+}

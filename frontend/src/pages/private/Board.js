@@ -151,8 +151,8 @@ function Board() {
             .then(archivedCards => {
               if (!archivedCards || archivedCards.length === 0) {
                 Swal.fire({
-                  title: "No hay tarjetas archivadas",
-                  text: "Aún no hay tarjetas archivadas en este tablero",
+                  title: "No Archived Cards",
+                  text: "There are no archived cards in this board yet",
                   icon: "info",
                   confirmButtonText: "OK"
                 });
@@ -763,8 +763,55 @@ function Board() {
               </div>
             </div>
           `,
+          showCancelButton: userRole === "edition",
           confirmButtonText: 'Close',
-          confirmButtonColor: '#6c757d'
+          confirmButtonColor: '#6c757d',
+          cancelButtonText: '🔄 Unarchive',
+          cancelButtonColor: '#28a745'
+        }).then((result) => {
+          if (result.dismiss === Swal.DismissReason.cancel && userRole === "edition") {
+            // Confirm unarchive
+            Swal.fire({
+              title: 'Unarchive card?',
+              text: "The card will be active again on the board",
+              icon: 'question',
+              showCancelButton: true,
+              confirmButtonColor: '#28a745',
+              cancelButtonColor: '#6c757d',
+              confirmButtonText: 'Yes, unarchive',
+              cancelButtonText: 'Cancel'
+            }).then((confirmResult) => {
+              if (confirmResult.isConfirmed) {
+                const boardId = window.location.pathname.split("/board/")[1];
+                
+                fetch(`http://localhost:5000/api/cards/${card._id}/unarchive`, {
+                  method: "PUT",
+                  headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  }
+                })
+                .then(response => {
+                  if (!response.ok) throw new Error('Error unarchiving');
+                  return response.json();
+                })
+                .then(() => {
+                  Swal.fire({
+                    title: 'Unarchived!',
+                    text: 'The card has been unarchived successfully',
+                    icon: 'success',
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                  }).then(() => {
+                    loadCards(boardId);
+                  });
+                })
+                .catch(() => {
+                  Swal.fire('Error', 'Could not unarchive the card', 'error');
+                });
+              }
+            });
+          }
         });
       });
     }
@@ -806,8 +853,14 @@ function Board() {
 
   return (
     <div className="board-wrapper">
-      <MenuDashboard handleLogout={handleLogout} toggleMenu={toggleMenu} menuOpen={menuOpen} />
-      <div id="board-container" className={`board-content ${menuOpen ? "menu-open" : "menu-closed"}`}></div>
+      <MenuDashboard
+        handleLogout={handleLogout}
+        toggleMenu={toggleMenu}
+        menuOpen={menuOpen}
+      />
+      <div className={`board-content ${!menuOpen ? 'menu-closed' : ''}`} id="board-container">
+        {/* El contenido del tablero se insertará aquí dinámicamente */}
+      </div>
     </div>
   );
 }
