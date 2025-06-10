@@ -11,7 +11,6 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: "Se requiere el ID del tablero" });
         }
 
-        // Validar que responsible sea un array
         if (!Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
         }
@@ -53,7 +52,6 @@ router.get('/:id', async (req, res) => {
 router.put('/:id', async (req, res) => {
     const { title, responsible, description, column } = req.body;
     try {
-        // Validar que responsible sea un array
         if (responsible && !Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
         }
@@ -86,4 +84,31 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// 📌 Duplicar una tarjeta
+router.post('/duplicate/:id', async (req, res) => {
+    try {
+        const originalCard = await Card.findById(req.params.id);
+        if (!originalCard) {
+            return res.status(404).json({ error: "Tarjeta original no encontrada" });
+        }
+
+        // Crear una nueva tarjeta con los mismos datos
+        const duplicatedCard = new Card({
+            title: originalCard.title + " (Copia)",
+            responsible: originalCard.responsible,
+            description: originalCard.description,
+            column: originalCard.column,
+            boardId: originalCard.boardId
+        });
+
+        await duplicatedCard.save();
+        res.status(201).json({ message: "Tarjeta duplicada exitosamente", card: duplicatedCard });
+
+    } catch (error) {
+        console.error("❌ Error al duplicar la tarjeta:", error);
+        res.status(500).json({ error: "Error al duplicar la tarjeta" });
+    }
+});
+
 module.exports = router;
+

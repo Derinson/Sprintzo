@@ -193,6 +193,51 @@ function Board() {
   function addColumn() {
     Swal.fire("Feature not implemented yet", "", "info");
   }
+function duplicateCard(originalCard) {
+  const boardId = window.location.pathname.split("/board/")[1];
+  const token = localStorage.getItem("token");
+
+  // Crear la nueva tarjeta basada en la original
+  fetch("http://localhost:5000/api/cards", {
+    method: "POST",
+    headers: {
+      "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`
+    },
+    body: JSON.stringify({
+      title: originalCard.title + " (Copy)",
+      responsible: originalCard.responsible,
+      description: originalCard.description,
+      column: originalCard.column,
+      boardId: boardId
+    })
+  })
+  .then(res => {
+    if (!res.ok) throw new Error('Error duplicating task');
+    return res.json();
+  })
+  .then(() => {
+    Swal.fire({
+      title: "Duplicated!",
+      text: "Task has been duplicated successfully",
+      icon: "success",
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    // Recargar tarjetas
+    fetch(`http://localhost:5000/api/cards/board/${boardId}`)
+      .then(res => res.json())
+      .then(cards => {
+        clearAllTasks();
+        cards.forEach(renderCard);
+      });
+  })
+  .catch(err => {
+    console.error(err);
+    Swal.fire('Error', 'Could not duplicate the task', 'error');
+  });
+}
 
   function addTask() {
     const boardId = window.location.pathname.split("/board/")[1];
@@ -612,6 +657,13 @@ function Board() {
     buttonsDiv.style.display = "flex";
     buttonsDiv.style.gap = "8px";
     buttonsDiv.style.marginTop = "10px";
+
+const duplicateBtn = document.createElement("button");
+duplicateBtn.textContent = "Duplicate";
+duplicateBtn.className = "edit-btn"; // reutilizamos estilo existente
+duplicateBtn.onclick = () => duplicateCard(card);
+
+buttonsDiv.appendChild(duplicateBtn);
 
     div.appendChild(contentDiv);
     div.appendChild(buttonsDiv);
