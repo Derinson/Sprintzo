@@ -78,6 +78,7 @@ router.post("/", verifyToken, async (req, res) => {
   }
 });
 
+
 // 📌 Agregar contribuyente
 router.post("/contribuyente/:id", verifyToken, async (req, res) => {
   try {
