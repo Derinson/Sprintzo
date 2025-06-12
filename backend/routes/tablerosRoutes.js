@@ -2,6 +2,8 @@ const express = require("express");
 const jwt = require("jsonwebtoken");
 const Tablero = require("../models/Tablero");
 const User = require("../models/userModel");
+const Card = require("../models/Card");
+const Notificacion = require("../models/Notificacion");
 const router = express.Router();
 
 // 📌 Middleware de autenticación
@@ -98,6 +100,16 @@ router.post("/contribuyente/:id", verifyToken, async (req, res) => {
     tablero.contribuyentes.push({ email, usuario: usuario._id, rol });
     await tablero.save();
 
+    // Crear notificación para el nuevo contribuyente
+    const creador = await User.findById(tablero.creadoPor);
+    const nuevaNotificacion = new Notificacion({
+      usuario: usuario._id,
+      mensaje: `${creador.email} te ha compartido el tablero "${tablero.nombre}" con rol de ${rol === 'edition' ? 'edición' : 'lectura'}`,
+      tipo: 'info',
+      tablero: tablero._id
+    });
+    await nuevaNotificacion.save();
+
     res.json({ message: `✅ Contribuyente ${email} agregado con rol ${rol}`, tablero });
   } catch (error) {
     res.status(500).json({ message: "🚨 Error al agregar contribuyente", error });
@@ -140,9 +152,26 @@ router.put("/:id", verifyToken, async (req, res) => {
     tablero.nombre = nombre;
 
     if (contribuyente && rol) {
-      const contribuyenteIndex = tablero.contribuyentes.findIndex(c => c.email.toString() === contribuyente);
+      const contribuyenteIndex = tablero.contribuyentes.findIndex(c => c.email === contribuyente);
       if (contribuyenteIndex !== -1) {
+        const rolAnterior = tablero.contribuyentes[contribuyenteIndex].rol;
         tablero.contribuyentes[contribuyenteIndex].rol = rol;
+
+        // Si el rol cambió, crear una notificación
+        if (rolAnterior !== rol) {
+          const creador = await User.findById(req.user.id);
+          const usuario = await User.findOne({ email: contribuyente });
+          
+          if (usuario) {
+            const nuevaNotificacion = new Notificacion({
+              usuario: usuario._id,
+              mensaje: `${creador.email} ha cambiado tu rol en el tablero "${tablero.nombre}" a ${rol === 'edition' ? 'edición' : 'lectura'}`,
+              tipo: 'info',
+              tablero: tablero._id
+            });
+            await nuevaNotificacion.save();
+          }
+        }
       }
     }
 
@@ -189,6 +218,52 @@ router.get("/:boardId/mi-rol", verifyToken, async (req, res) => {
 
   } catch (error) {
     res.status(500).json({ error: "Error al verificar rol en el tablero" });
+  }
+});
+
+// 📌 Obtener tableros con tarjetas archivadas
+router.get("/with-archived", verifyToken, async (req, res) => {
+  try {
+    // Primero obtenemos todos los tableros del usuario (creados y compartidos)
+    const tableros = await Tablero.find({
+      $or: [
+        { creadoPor: req.user.id },
+        { "contribuyentes.usuario": req.user.id }
+      ]
+    });
+
+    // Obtenemos las tarjetas archivadas para cada tablero
+    const boardsWithArchived = await Promise.all(
+      tableros.map(async (tablero) => {
+        const archivedCards = await Card.find({
+          boardId: tablero._id,
+          archived: true
+        });
+
+        if (archivedCards.length > 0) {
+          // Si el tablero tiene tarjetas archivadas, lo incluimos con información adicional
+          return {
+            _id: tablero._id,
+            name: tablero.nombre,
+            description: tablero.descripcion || "Sin descripción",
+            archivedCount: archivedCards.length,
+            lastArchivedDate: Math.max(...archivedCards.map(card => new Date(card.archivedAt)))
+          };
+        }
+        return null;
+      })
+    );
+
+    // Filtramos los tableros que no tienen tarjetas archivadas
+    const filteredBoards = boardsWithArchived.filter(board => board !== null);
+
+    res.json({
+      count: filteredBoards.length,
+      boards: filteredBoards
+    });
+  } catch (error) {
+    console.error("Error al obtener tableros con archivados:", error);
+    res.status(500).json({ message: "🚨 Error al obtener tableros con archivados", error });
   }
 });
 

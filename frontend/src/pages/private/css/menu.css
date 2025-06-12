@@ -16,20 +16,14 @@
     transition: width 0.3s ease; /* Transición suave */
     display: flex;
     flex-direction: column;
+    width: 250px;
 }
 .menu-dashboard.menu-closed .menu .enlace span {
     display: none; /* Oculta solo el texto */
 }
 
-/* Mantener los íconos visibles */
-.menu .enlace i {
-    font-size: 20px;
-    color: var(--blanco);
-}
-
-
 .menu-dashboard.menu-closed {
-    width: 50px; /* Ancho reducido cuando el menú está cerrado */
+    width: 60px; /* Ancho reducido cuando el menú está cerrado */
 }
 
 /* Ocultar el nombre del usuario cuando el menú esté cerrado */
@@ -43,7 +37,8 @@
 }
 
 .username {
-    margin-top: 10px;
+    margin-top: -30px;
+    margin-left: -100px;
     font-size: 18px;
     font-weight: bold;
     text-align: center;
@@ -52,29 +47,40 @@
 
 .top-menu {
     display: flex;
+    flex-direction: column;
     align-items: center;
-    padding: 10px;
+    padding: 20px;
+    position: relative;
 }
 
-/* Logo - Configuración */
+.logo {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
 .logo img {
-    height: 140px; /* Tamaño del logo */
-    transition: opacity 0.1s ease, width 0.1s ease; /* Animaciones suaves */
+    width: 80%;
+    max-width: 200px;
+    margin-top: -115px;
+    margin-left: -100px;
 }
 
-/* Ocultar el logo cuando el menú esté cerrado */
 .menu-dashboard.menu-closed .logo img {
-    display: none; /* Ocultar logo */
+    width: 40px;
 }
 
-/* Mostrar el logo cuando el menú esté abierto */
-.menu-dashboard:not(.menu-closed) .logo img {
-    display: block; /* Mostrar logo */
+/* Ocultar el texto del logo cuando el menú está cerrado */
+.menu-dashboard.menu-closed .logo-text {
+    display: none;
 }
 
 /* Botón del menú */
 .menu-toggle {
-    margin-left: auto;
+    position: absolute;
+    right: 15px;
+    top: -30px;
     cursor: pointer;
     font-size: 24px;
     color: var(--blanco); /* Color blanco */
@@ -96,6 +102,7 @@
     color: var(--blanco); /* Texto en blanco */
     transition: all 0.3s ease; /* Animación suave */
     border-radius: 8px; /* Bordes redondeados */
+    position: relative;
 }
 
 .menu .enlace:hover {
@@ -107,4 +114,82 @@
     font-size: 20px;
     margin-right: 10px;
     color: var(--blanco); /* Íconos en blanco */
+}
+
+/* Badge para contador de archivados */
+.archived-badge {
+    position: absolute;
+    top: 50%;
+    transform: translateY(-50%);
+    right: 20px;
+    background-color: #e74c3c;
+    color: white;
+    font-size: 11px;
+    font-weight: bold;
+    min-width: 16px;
+    height: 16px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 4px;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.2);
+    z-index: 1;
+}
+
+.menu-closed .archived-badge {
+    right: 5px;
+}
+
+.enlace:hover .archived-badge {
+    transform: translateY(-50%) scale(1.1);
+    transition: transform 0.2s ease;
+}
+
+/* Mantener los íconos visibles */
+.menu .enlace i {
+    font-size: 20px;
+    color: var(--blanco);
+}
+
+/* Ajustes para la campanita */
+.menu-dashboard .notificaciones-container {
+    position: absolute;
+    right: 50px;
+    top: -45px;
+    z-index: 1000;
+    color: var(--blanco);
+}
+
+.menu-dashboard.menu-closed .notificaciones-container {
+    right: 12px;
+    margin-top: 50px;
+}
+
+/* Asegurar que el ícono de la campana sea visible */
+.menu-dashboard .notificaciones-container i {
+    font-size: 24px;
+    color: var(--blanco);
+}
+
+.menu-dashboard .campana-btn {
+    color: var(--blanco);
+    font-size: 20px;
+}
+
+.menu-dashboard .campana-btn:hover {
+    color: var(--hover);
+}
+
+.menu-dashboard .menu-notificaciones {
+    position: fixed;
+    top: 60px;
+    right: 20px;
+}
+
+/* Ocultar elementos cuando el menú está cerrado */
+.menu-dashboard.menu-closed .logo img,
+.menu-dashboard.menu-closed .username,
+.menu-dashboard.menu-closed .menu .enlace span {
+    display: none;
 }

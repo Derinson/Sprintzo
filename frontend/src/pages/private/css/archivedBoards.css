@@ -1,0 +1,125 @@
+:root {
+  --blanco: #FFFFFF;
+  --azul-opacidad: #00ADEF;
+  --bg-menu: #0077C8;
+  --bg-body: #C7E1FF;
+  --hover: #00D084;
+}
+
+.archived-boards-wrapper {
+  display: flex;
+  min-height: 100vh;
+  background-color: var(--bg-body);
+}
+
+.archived-content {
+  flex: 1;
+  padding: 40px;
+  margin-left: 60px;
+  width: calc(100% - 60px);
+  transition: margin-left 0.3s ease, width 0.3s ease;
+}
+
+.archived-title {
+  font-size: 28px;
+  color: var(--bg-menu);
+  margin-bottom: 30px;
+  display: flex;
+  align-items: center;
+  gap: 15px;
+}
+
+.archived-title i {
+  font-size: 24px;
+}
+
+.boards-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 25px;
+  padding: 20px 0;
+}
+
+.board-card {
+  background: var(--blanco);
+  border-radius: 12px;
+  padding: 25px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+  cursor: pointer;
+}
+
+.board-card:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0,0,0,0.15);
+}
+
+.board-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: 15px;
+}
+
+.board-header h3 {
+  margin: 0;
+  color: var(--bg-menu);
+  font-size: 20px;
+  font-weight: 600;
+}
+
+.archived-count {
+  background: var(--azul-opacidad);
+  color: var(--blanco);
+  padding: 6px 12px;
+  border-radius: 20px;
+  font-size: 13px;
+  font-weight: 500;
+}
+
+.board-info {
+  color: #666;
+  font-size: 14px;
+}
+
+.board-info p {
+  margin: 0 0 15px 0;
+  line-height: 1.5;
+}
+
+.last-archived {
+  font-size: 13px;
+  color: #888;
+  display: flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.loading-spinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 200px;
+  font-size: 18px;
+  color: var(--bg-menu);
+}
+
+.no-archived {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  height: 200px;
+  color: var(--bg-menu);
+}
+
+.no-archived i {
+  font-size: 48px;
+  margin-bottom: 16px;
+  color: var(--azul-opacidad);
+}
+
+.no-archived p {
+  font-size: 18px;
+  margin: 0;
+} 

@@ -4,6 +4,7 @@ const connectDB = require("./config/db");
 const authUser = require("./routes/userRoutes");
 const tablerosRoutes = require("./routes/tablerosRoutes");
 const cardRoutes = require('./routes/cardRoutes');
+const notificacionesRoutes = require('./routes/notificacionesRoutes');
 
 const app = express();
 
@@ -18,6 +19,7 @@ app.use(express.json());
 app.use("/userRoutes", authUser); // Ruta de usuarios sigue igual
 app.use("/tablerosRoutes", tablerosRoutes); // Ruta de tableros con autenticación
 app.use('/api/cards', cardRoutes);
+app.use('/api/notificaciones', notificacionesRoutes);
 
 const PORT = 5000;
 app.listen(PORT, () => {

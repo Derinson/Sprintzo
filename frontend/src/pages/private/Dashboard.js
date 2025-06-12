@@ -143,14 +143,21 @@ const [hoveredTablero, setHoveredTablero] = useState(null); // Estado para el co
   };
 
 const editarTablero = async (id, nombreActual, contribuyentes) => {
+  // Identificar al creador (primer contribuyente)
+  const creador = contribuyentes[0];
+  const otrosContribuyentes = contribuyentes.slice(1);
+
   const { value: formValues } = await Swal.fire({
     title: "Edit Board",
     html: `
       <label>New Name for the Board:</label>
       <input id="swal-input-nombre" class="swal2-input" value="${nombreActual}">
-      <label>Select a taxpayer:</label>
+      <label>Select a contributor:</label>
       <select id="swal-input-contribuyente" class="swal2-select">
-        ${contribuyentes.map(contribuyente => 
+        <option value="${creador.email}" disabled style="background-color: #f3f4f6; font-style: italic;">
+          ${creador.email} - Creator (cannot be modified)
+        </option>
+        ${otrosContribuyentes.map(contribuyente => 
           `<option value="${contribuyente.email}">${contribuyente.email} - ${contribuyente.rol}</option>`
         ).join("")}
       </select>
@@ -165,9 +172,15 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
     confirmButtonText: "Save changes",
     cancelButtonText: "Cancel",
     preConfirm: () => {
+      const contribuyenteSeleccionado = document.getElementById("swal-input-contribuyente").value;
+      // No permitir seleccionar al creador
+      if (contribuyenteSeleccionado === creador.email) {
+        Swal.showValidationMessage('Cannot modify the creator\'s role');
+        return false;
+      }
       return {
         nuevoNombre: document.getElementById("swal-input-nombre").value,
-        contribuyenteSeleccionado: document.getElementById("swal-input-contribuyente").value,
+        contribuyenteSeleccionado,
         nuevoRol: document.getElementById("swal-input-rol").value,
       };
     },
@@ -220,7 +233,11 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
 
   return (
  <div className="dashboard-wrapper">
-      <MenuDashboard handleLogout={handleLogout} toggleMenu={toggleMenu} menuOpen={menuOpen} />
+<MenuDashboard
+        handleLogout={handleLogout}
+        toggleMenu={toggleMenu}
+        menuOpen={menuOpen}
+      />
       <div className={`dashboard-content ${menuOpen ? "menu-open" : "menu-closed"}`}>
        <button onClick={crearTablero} className="crear">Create Board</button>
         <h2>My Boards</h2>
@@ -244,8 +261,20 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
 
               {hoveredTablero === tablero._id && (
                 <div className="contribuyentes-list">
-                  {tablero.contribuyentes.map(contribuyente => (
-                    <p key={contribuyente.email}>{contribuyente.email}</p>
+                  {tablero.contribuyentes.map((contribuyente, index) => (
+                    <p 
+                      key={contribuyente.email} 
+                      style={index === 0 ? {
+                        color: '#2563eb',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      } : {}}
+                    >
+                      {index === 0 ? '👑 ' : ''}{contribuyente.email}
+                      {index === 0 ? ' (Creator)' : ` - ${contribuyente.rol}`}
+                    </p>
                   ))}
                 </div>
               )}
@@ -254,8 +283,9 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
                 <div className="dropdown-menu" style={{ top: `${menuPosition.top}px`, left: `${menuPosition.left}px` }}>
                   <button onClick={() => editarTablero(tablero._id, tablero.nombre, tablero.contribuyentes)}>Edit</button>
                   <button>Delete</button>
-                  <button onClick={() => agregarContribuyente(tablero._id)}>Add taxpayer</button>
+                  <button onClick={() => agregarContribuyente(tablero._id)}>Add contributor</button>
                 </div>
+
               )}
 
               <button onClick={() => abrirTablero(tablero._id)}>Open</button>
@@ -267,7 +297,37 @@ const editarTablero = async (id, nombreActual, contribuyentes) => {
         <div className="tableros">
           {tablerosCompartidos.map((tablero) => (
             <div key={tablero._id} className="tablero">
-              <h3>{tablero.nombre} <span className="contador">({tablero.contribuyentes.length})</span></h3>
+              <h3>
+                {tablero.nombre} 
+                <span 
+                  className="contador" 
+                  onMouseEnter={() => handleMouseEnter(tablero._id)}
+                  onMouseLeave={handleMouseLeave}
+                >
+                  ({tablero.contribuyentes.length})
+                </span>
+              </h3>
+
+              {hoveredTablero === tablero._id && (
+                <div className="contribuyentes-list">
+                  {tablero.contribuyentes.map((contribuyente, index) => (
+                    <p 
+                      key={contribuyente.email} 
+                      style={index === 0 ? {
+                        color: '#2563eb',
+                        fontWeight: 'bold',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '4px'
+                      } : {}}
+                    >
+                      {index === 0 ? '👑 ' : ''}{contribuyente.email}
+                      {index === 0 ? ' (Creator)' : ` - ${contribuyente.rol}`}
+                    </p>
+                  ))}
+                </div>
+              )}
+
               <button onClick={() => abrirTablero(tablero._id)}>Open</button>
             </div>
           ))}

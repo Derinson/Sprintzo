@@ -10,7 +10,9 @@ const cardSchema = new mongoose.Schema({
         completed: { type: Boolean, default: false }
     }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }, // 📌 Ya no es obligatorio
-    boardId: { type: mongoose.Schema.Types.ObjectId, ref: "Board", required: true } // 📌 Se mantiene obligatorio
+    boardId: { type: mongoose.Schema.Types.ObjectId, ref: "Board", required: true }, // 📌 Se mantiene obligatorio
+    archived: { type: Boolean, default: false }, // Campo para indicar si la tarjeta está archivada
+    archivedAt: { type: Date } // Fecha en que se archivó la tarjeta
 }, { timestamps: true });
 
 module.exports = mongoose.model('Card', cardSchema);
