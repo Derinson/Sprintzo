@@ -4,19 +4,29 @@ const Card = require('../models/Card');
 
 // Crear una nueva tarjeta vinculada a un tablero
 router.post('/', async (req, res) => {
-    const { title, responsible, description, column, boardId } = req.body;
+    const { title, responsible, description, column, boardId, checklist } = req.body;
 
     try {
         if (!boardId) {
             return res.status(400).json({ error: "Se requiere el ID del tablero" });
         }
 
-        // Validar que responsible sea un array
         if (!Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
         }
 
-        const newCard = new Card({ title, responsible, description, column, boardId });
+        if (checklist && !Array.isArray(checklist)) {
+            return res.status(400).json({ error: "El campo checklist debe ser un array" });
+        }
+
+        const newCard = new Card({ 
+            title, 
+            responsible, 
+            description, 
+            column, 
+            boardId,
+            checklist: checklist || []
+        });
         await newCard.save();
         res.status(201).json({ message: "Tarjeta creada exitosamente", card: newCard });
     } catch (error) {
@@ -62,11 +72,14 @@ router.get('/:id', async (req, res) => {
 
 // Actualizar una tarjeta
 router.put('/:id', async (req, res) => {
-    const { title, responsible, description, column } = req.body;
+    const { title, responsible, description, column, checklist } = req.body;
     try {
-        // Validar que responsible sea un array
         if (responsible && !Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
+        }
+
+        if (checklist && !Array.isArray(checklist)) {
+            return res.status(400).json({ error: "El campo checklist debe ser un array" });
         }
 
         const updatedCard = await Card.findByIdAndUpdate(
@@ -75,7 +88,8 @@ router.put('/:id', async (req, res) => {
                 ...(title && { title }),
                 ...(responsible && { responsible }),
                 ...(description && { description }),
-                ...(column && { column })
+                ...(column && { column }),
+                ...(checklist && { checklist })
             },
             { new: true }
         );
@@ -133,4 +147,32 @@ router.delete('/:id', async (req, res) => {
     }
 });
 
+// 📌 Duplicar una tarjeta
+router.post('/duplicate/:id', async (req, res) => {
+    try {
+        const originalCard = await Card.findById(req.params.id);
+        if (!originalCard) {
+            return res.status(404).json({ error: "Tarjeta original no encontrada" });
+        }
+
+        // Crear una nueva tarjeta con los mismos datos
+        const duplicatedCard = new Card({
+            title: originalCard.title + " (Copy)",
+            responsible: originalCard.responsible,
+            description: originalCard.description,
+            column: originalCard.column,
+            boardId: originalCard.boardId,
+            checklist: originalCard.checklist || []
+        });
+
+        await duplicatedCard.save();
+        res.status(201).json({ message: "Tarjeta duplicada exitosamente", card: duplicatedCard });
+
+    } catch (error) {
+        console.error("❌ Error al duplicar la tarjeta:", error);
+        res.status(500).json({ error: "Error al duplicar la tarjeta" });
+    }
+});
+
 module.exports = router;
+

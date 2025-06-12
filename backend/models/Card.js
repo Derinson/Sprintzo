@@ -5,6 +5,10 @@ const cardSchema = new mongoose.Schema({
     responsible: [{ type: String, required: true }], // Modificado para ser un array de strings
     description: { type: String, required: true },
     column: { type: String, required: true },
+    checklist: [{
+        text: { type: String, required: true },
+        completed: { type: Boolean, default: false }
+    }],
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }, // 📌 Ya no es obligatorio
     boardId: { type: mongoose.Schema.Types.ObjectId, ref: "Board", required: true }, // 📌 Se mantiene obligatorio
     archived: { type: Boolean, default: false }, // Campo para indicar si la tarjeta está archivada

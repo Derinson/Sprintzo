@@ -79,7 +79,6 @@ function Board() {
       setContributors(contribData);
 
       if (rolData.rol === "reading") {
-        // Deshabilitar todas las acciones para usuarios de solo lectura
         document.documentElement.style.setProperty('--action-disabled-opacity', '0.6');
         document.documentElement.style.setProperty('--action-disabled-cursor', 'not-allowed');
       }
@@ -144,7 +143,6 @@ function Board() {
         toggleArchivedBtn.onclick = () => {
           const boardId = window.location.pathname.split("/board/")[1];
           
-          // Si vamos a mostrar archivados, primero verificamos si hay
           if (!showArchived) {
             fetch(`http://localhost:5000/api/cards/board/${boardId}?archived=true`)
             .then(res => res.json())
@@ -158,13 +156,11 @@ function Board() {
                 });
                 return;
               }
-              // Si hay archivados, cambiamos el estado y actualizamos el botón
               setShowArchived(true);
               toggleArchivedBtn.innerHTML = `<span>🗃️</span> Show Active`;
               loadCards(boardId);
             });
           } else {
-            // Si estamos mostrando archivados y queremos ver activos, simplemente cambiamos
             setShowArchived(false);
             toggleArchivedBtn.innerHTML = `<span>🗃️</span> Show Archived`;
             loadCards(boardId);
@@ -204,13 +200,10 @@ function Board() {
           addColumnBtn.addEventListener("click", addColumn);
         }
 
-        // Obtener el `boardId` desde la URL
         const boardId = window.location.pathname.split("/board/")[1];
-
-        // Cargar las tareas del tablero desde la base de datos
         loadCards(boardId);
 
-        // Configurar los contenedores para drag and drop solo si tiene permisos de edición
+        // Configurar drag and drop solo para usuarios con permisos de edición
         if (userRole === "edition") {
           const containers = document.querySelectorAll(".task-container");
           containers.forEach(container => {
@@ -223,7 +216,6 @@ function Board() {
               const cardId = e.dataTransfer.getData("text/plain");
               const newColumn = container.id.replace("-tasks", "");
 
-              // Primero obtener la tarjeta actual para mantener sus datos
               fetch(`http://localhost:5000/api/cards/${cardId}`, {
                 method: "GET",
                 headers: {
@@ -233,7 +225,6 @@ function Board() {
               })
               .then(res => res.json())
               .then(currentCard => {
-                // Actualizar la tarjeta manteniendo todos sus datos excepto la columna
                 fetch(`http://localhost:5000/api/cards/${cardId}`, {
                   method: "PUT",
                   headers: {
@@ -286,6 +277,45 @@ function Board() {
     Swal.fire("Feature not implemented yet", "", "info");
   }
 
+  function duplicateCard(originalCard) {
+    const boardId = window.location.pathname.split("/board/")[1];
+    const token = localStorage.getItem("token");
+
+    fetch("http://localhost:5000/api/cards", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${token}`
+      },
+      body: JSON.stringify({
+        title: originalCard.title + " (Copy)",
+        responsible: originalCard.responsible,
+        description: originalCard.description,
+        checklist: originalCard.checklist,
+        column: originalCard.column,
+        boardId: boardId
+      })
+    })
+    .then(res => {
+      if (!res.ok) throw new Error('Error duplicating task');
+      return res.json();
+    })
+    .then(() => {
+      Swal.fire({
+        title: "Duplicated!",
+        text: "Task has been duplicated successfully",
+        icon: "success",
+        timer: 1500,
+        showConfirmButton: false
+      });
+      loadCards(boardId);
+    })
+    .catch(err => {
+      console.error(err);
+      Swal.fire('Error', 'Could not duplicate the task', 'error');
+    });
+  }
+
   function addTask() {
     const boardId = window.location.pathname.split("/board/")[1];
 
@@ -294,73 +324,131 @@ function Board() {
         "Authorization": `Bearer ${localStorage.getItem("token")}`
       }
     })
-      .then(res => res.json())
-      .then(contribuyentes => {
-        if (!contribuyentes.length) {
-          Swal.fire("Error", "No contributors in this board.", "error");
-          return;
-        }
+    .then(res => res.json())
+    .then(contribuyentes => {
+      if (!contribuyentes.length) {
+        Swal.fire("Error", "No contributors in this board.", "error");
+        return;
+      }
+
+      Swal.fire({
+        title: '<h2 class="swal2-title">New Task</h2>',
+        input: "text",
+        inputPlaceholder: "Enter title",
+        showCancelButton: true,
+        confirmButtonText: 'Next',
+        cancelButtonText: 'Cancel',
+      }).then(titleResult => {
+        if (!titleResult.value) return;
 
         Swal.fire({
-          title: '<h2 class="swal2-title">New Task</h2>',
-          input: "text",
-          inputPlaceholder: "Enter title",
+          title: '<h2 class="swal2-title">Assign Responsibles</h2>',
+          html: `
+            <div class="contributor-selector">
+              ${contribuyentes.map(c => `
+                <div class="contributor-item">
+                  <input type="checkbox" 
+                         id="check-${c.email}" 
+                         value="${c.email}" 
+                         class="contributor-checkbox">
+                  <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
+                    ${getInitials(c.email)}
+                  </div>
+                  <label for="check-${c.email}">${c.email}</label>
+                </div>
+              `).join('')}
+              <div class="contributor-item unassigned">
+                <div class="contributor-avatar" style="background-color: #95a5a6">
+                  UA
+                </div>
+                <span class="unassigned-label">Unassigned (default)</span>
+              </div>
+            </div>
+          `,
           showCancelButton: true,
           confirmButtonText: 'Next',
           cancelButtonText: 'Cancel',
-        }).then(titleResult => {
-          if (!titleResult.value) return;
+          preConfirm: () => {
+            const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+            const selectedResponsibles = selectedCheckboxes.length > 0 
+              ? Array.from(selectedCheckboxes).map(cb => cb.value)
+              : ['Unassigned'];
+            
+            return {
+              title: titleResult.value,
+              responsible: selectedResponsibles
+            };
+          }
+        }).then(responsibleResult => {
+          if (!responsibleResult.value) return;
 
           Swal.fire({
-            title: '<h2 class="swal2-title">Assign Responsibles</h2>',
-            html: `
-              <div class="contributor-selector">
-                ${contribuyentes.map(c => `
-                  <div class="contributor-item">
-                    <input type="checkbox" 
-                           id="check-${c.email}" 
-                           value="${c.email}" 
-                           class="contributor-checkbox">
-                    <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
-                      ${getInitials(c.email)}
-                    </div>
-                    <label for="check-${c.email}">${c.email}</label>
-                  </div>
-                `).join('')}
-                <div class="contributor-item unassigned">
-                  <div class="contributor-avatar" style="background-color: #95a5a6">
-                    UA
-                  </div>
-                  <span class="unassigned-label">Unassigned (default)</span>
-                </div>
-              </div>
-            `,
+            title: '<h2 class="swal2-title">Task Description</h2>',
+            input: "textarea",
+            inputPlaceholder: "Enter description",
             showCancelButton: true,
             confirmButtonText: 'Next',
             cancelButtonText: 'Cancel',
-            preConfirm: () => {
-              const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
-              const selectedResponsibles = selectedCheckboxes.length > 0 
-                ? Array.from(selectedCheckboxes).map(cb => cb.value)
-                : ['Unassigned'];
-              
-              return {
-                title: titleResult.value,
-                responsible: selectedResponsibles
-              };
-            }
-          }).then(responsibleResult => {
-            if (!responsibleResult.value) return;
+          }).then(descriptionResult => {
+            if (!descriptionResult.value) return;
 
             Swal.fire({
-              title: '<h2 class="swal2-title">Task Description</h2>',
-              input: "textarea",
-              inputPlaceholder: "Enter description",
+              title: '<h2 class="swal2-title">Add Checklist (Optional)</h2>',
+              html: `
+                <div style="text-align: left; padding: 10px;">
+                  <div id="checklist-container" style="margin-bottom: 10px;"></div>
+                  <button
+                    type="button"
+                    onclick="addChecklistItem()"
+                    style="background: #4CAF50; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;"
+                  >
+                    + Add Item
+                  </button>
+                </div>
+              `,
               showCancelButton: true,
-              confirmButtonText: 'Create',
+              confirmButtonText: 'Create Task',
               cancelButtonText: 'Cancel',
-            }).then(descriptionResult => {
-              if (!descriptionResult.value) return;
+              didOpen: () => {
+                window.addChecklistItem = () => {
+                  const container = document.getElementById('checklist-container');
+                  const newItem = document.createElement('div');
+                  newItem.className = 'checklist-item';
+                  newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
+                  newItem.innerHTML = `
+                    <input
+                      type="checkbox"
+                      class="checklist-checkbox"
+                      style="margin-right: 8px;"
+                    >
+                    <input
+                      type="text"
+                      placeholder="Enter checklist item..."
+                      class="checklist-text swal2-input"
+                      style="flex: 1; margin: 0;"
+                    >
+                    <button
+                      type="button"
+                      class="checklist-delete-btn"
+                      style="margin-left: 8px; background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px;"
+                      onclick="this.parentElement.remove()"
+                    >
+                      ×
+                    </button>
+                  `;
+                  container.appendChild(newItem);
+                };
+              },
+              preConfirm: () => {
+                const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
+                  text: item.querySelector('.checklist-text').value,
+                  completed: item.querySelector('.checklist-checkbox').checked
+                })).filter(item => item.text.trim() !== '');
+
+                return checklistItems;
+              }
+            }).then(checklistResult => {
+              if (!checklistResult.value) return;
 
               const columnChoice = "todo";
               const token = localStorage.getItem("token");
@@ -375,6 +463,7 @@ function Board() {
                   title: responsibleResult.value.title,
                   responsible: responsibleResult.value.responsible,
                   description: descriptionResult.value,
+                  checklist: checklistResult.value,
                   column: columnChoice,
                   boardId
                 })
@@ -392,8 +481,6 @@ function Board() {
                   timerProgressBar: true,
                   showConfirmButton: false
                 });
-                
-                // Reload tasks
                 loadCards(boardId);
               })
               .catch(err => {
@@ -408,6 +495,7 @@ function Board() {
           });
         });
       });
+    });
   }
 
   function renderCard(card) {
@@ -419,7 +507,6 @@ function Board() {
 
     const div = document.createElement("div");
     div.className = "task-card";
-    // Solo permitir drag and drop si el usuario tiene permisos de edición y la tarjeta no está archivada
     div.setAttribute("draggable", userRole === "edition" && !card.archived);
     div.dataset.id = card._id;
 
@@ -460,46 +547,43 @@ function Board() {
     const avatarsContainer = document.createElement("div");
     avatarsContainer.style.display = "flex";
     avatarsContainer.style.gap = "2px";
-    avatarsContainer.style.flexDirection = "row-reverse"; // Para que se apilen desde la derecha
+    avatarsContainer.style.flexDirection = "row-reverse";
 
     responsibles.forEach(responsible => {
-        const avatarContainer = document.createElement("div");
-        avatarContainer.style.position = "relative";
-        avatarContainer.style.display = "inline-block";
-        avatarContainer.style.marginLeft = "-8px"; // Para que los avatares se superpongan ligeramente
+      const avatarContainer = document.createElement("div");
+      avatarContainer.style.position = "relative";
+      avatarContainer.style.display = "inline-block";
+      avatarContainer.style.marginLeft = "-8px";
 
-        const avatar = document.createElement("div");
-        avatar.style.width = "24px";
-        avatar.style.height = "24px";
-        avatar.style.borderRadius = "50%";
-        avatar.style.backgroundColor = getRandomColor(responsible);
-        avatar.style.color = "white";
-        avatar.style.display = "flex";
-        avatar.style.alignItems = "center";
-        avatar.style.justifyContent = "center";
-        avatar.style.fontSize = "11px";
-        avatar.style.fontWeight = "bold";
-        avatar.style.cursor = "pointer";
-        avatar.style.border = "2px solid white";
-        avatar.style.boxSizing = "border-box";
-        avatar.textContent = getInitials(responsible);
+      const avatar = document.createElement("div");
+      avatar.style.width = "24px";
+      avatar.style.height = "24px";
+      avatar.style.borderRadius = "50%";
+      avatar.style.backgroundColor = getRandomColor(responsible);
+      avatar.style.color = "white";
+      avatar.style.display = "flex";
+      avatar.style.alignItems = "center";
+      avatar.style.justifyContent = "center";
+      avatar.style.fontSize = "11px";
+      avatar.style.fontWeight = "bold";
+      avatar.style.cursor = "pointer";
+      avatar.style.border = "2px solid white";
+      avatar.style.boxSizing = "border-box";
+      avatar.textContent = getInitials(responsible);
+      avatar.title = responsible;
 
-        // Tooltip para mostrar el email completo
-        avatar.title = responsible;
+      avatar.onmouseover = () => {
+        avatar.style.transform = "scale(1.1)";
+        avatar.style.transition = "transform 0.2s ease";
+        avatar.style.zIndex = "1";
+      };
+      avatar.onmouseout = () => {
+        avatar.style.transform = "scale(1)";
+        avatar.style.zIndex = "0";
+      };
 
-        // Efecto hover
-        avatar.onmouseover = () => {
-            avatar.style.transform = "scale(1.1)";
-            avatar.style.transition = "transform 0.2s ease";
-            avatar.style.zIndex = "1";
-        };
-        avatar.onmouseout = () => {
-            avatar.style.transform = "scale(1)";
-            avatar.style.zIndex = "0";
-        };
-
-        avatarContainer.appendChild(avatar);
-        avatarsContainer.appendChild(avatarContainer);
+      avatarContainer.appendChild(avatar);
+      avatarsContainer.appendChild(avatarContainer);
     });
 
     responsibleContainer.appendChild(avatarsContainer);
@@ -535,7 +619,71 @@ function Board() {
     contentDiv.appendChild(headerContainer);
     contentDiv.appendChild(descriptionContainer);
 
-    contentDiv.style.backgroundColor = "transparent";
+    // Add checklist to card display
+    if (card.checklist && card.checklist.length > 0) {
+      const checklistContainer = document.createElement("div");
+      checklistContainer.style.marginTop = "12px";
+      checklistContainer.style.padding = "8px";
+      checklistContainer.style.backgroundColor = "#f8f9fa";
+      checklistContainer.style.borderRadius = "6px";
+
+      const checklistTitle = document.createElement("div");
+      checklistTitle.style.display = "flex";
+      checklistTitle.style.alignItems = "center";
+      checklistTitle.style.marginBottom = "8px";
+      checklistTitle.innerHTML = `
+        <span style="font-size: 14px; margin-right: 8px;">✅</span>
+        <span style="font-weight: 600; color: #2c3e50;">Checklist</span>
+      `;
+
+      const checklistProgress = document.createElement("div");
+      const completedItems = card.checklist.filter(item => item.completed).length;
+      const totalItems = card.checklist.length;
+      const progressPercentage = Math.round((completedItems / totalItems) * 100);
+
+      checklistProgress.style.marginBottom = "8px";
+      checklistProgress.innerHTML = `
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 4px;">
+          <span style="font-size: 12px; color: #666;">${completedItems}/${totalItems}</span>
+          <span style="font-size: 12px; color: #666;">${progressPercentage}%</span>
+        </div>
+        <div style="height: 4px; background-color: #e9ecef; border-radius: 2px;">
+          <div style="height: 100%; width: ${progressPercentage}%; background-color: #4CAF50; border-radius: 2px;"></div>
+        </div>
+      `;
+
+      const checklistItems = document.createElement("div");
+      checklistItems.style.marginTop = "8px";
+
+      card.checklist.forEach(item => {
+        const itemElement = document.createElement("div");
+        itemElement.style.display = "flex";
+        itemElement.style.alignItems = "center";
+        itemElement.style.marginBottom = "4px";
+        itemElement.innerHTML = `
+          <input type="checkbox" ${item.completed ? 'checked' : ''} disabled style="margin-right: 8px;">
+          <span style="font-size: 13px; color: ${item.completed ? '#95a5a6' : '#2c3e50'}; text-decoration: ${item.completed ? 'line-through' : 'none'};">
+            ${item.text}
+          </span>
+        `;
+        checklistItems.appendChild(itemElement);
+      });
+
+      checklistContainer.appendChild(checklistTitle);
+      checklistContainer.appendChild(checklistProgress);
+      checklistContainer.appendChild(checklistItems);
+      contentDiv.appendChild(checklistContainer);
+    }
+
+    // Agregar indicador visual si la tarjeta está archivada
+    if (card.archived) {
+      const archivedBadge = document.createElement("div");
+      archivedBadge.className = "archived-badge";
+      archivedBadge.textContent = "🗃️ Archived";
+      contentDiv.appendChild(archivedBadge);
+      div.style.opacity = "0.7";
+      div.classList.add("archived");
+    }
 
     // Solo agregar el evento click para editar si el usuario tiene permisos de edición
     if (userRole === "edition" && !card.archived) {
@@ -594,7 +742,7 @@ function Board() {
                   </div>
                 </div>
 
-                <div class="form-group">
+                <div class="form-group" style="margin-bottom: 20px;">
                   <label class="form-label">
                     📄 Description:
                   </label>
@@ -602,6 +750,46 @@ function Board() {
                     id="swal-input-description" 
                     class="swal2-textarea"
                   >${card.description}</textarea>
+                </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label class="form-label">
+                    ✅ Checklist:
+                  </label>
+                  <div id="checklist-container" style="margin-bottom: 10px;">
+                    ${(card.checklist || []).map((item, index) => `
+                      <div class="checklist-item" style="display: flex; align-items: center; margin-bottom: 8px;">
+                        <input
+                          type="checkbox"
+                          id="checklist-${index}"
+                          class="checklist-checkbox"
+                          ${item.completed ? 'checked' : ''}
+                          style="margin-right: 8px;"
+                        >
+                        <input
+                          type="text"
+                          value="${item.text}"
+                          class="checklist-text swal2-input"
+                          style="flex: 1; margin: 0;"
+                        >
+                        <button
+                          type="button"
+                          class="checklist-delete-btn"
+                          style="margin-left: 8px; background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px;"
+                          onclick="this.parentElement.remove()"
+                        >
+                          ×
+                        </button>
+                      </div>
+                    `).join('')}
+                  </div>
+                  <button
+                    type="button"
+                    onclick="addChecklistItem()"
+                    style="background: #4CAF50; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;"
+                  >
+                    + Add Item
+                  </button>
                 </div>
               </div>
             `,
@@ -617,7 +805,42 @@ function Board() {
             denyButtonColor: '#6c757d',
             cancelButtonColor: '#dc3545',
             reverseButtons: true,
+            didOpen: () => {
+              window.addChecklistItem = () => {
+                const container = document.getElementById('checklist-container');
+                const newItem = document.createElement('div');
+                newItem.className = 'checklist-item';
+                newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
+                newItem.innerHTML = `
+                  <input
+                    type="checkbox"
+                    class="checklist-checkbox"
+                    style="margin-right: 8px;"
+                  >
+                  <input
+                    type="text"
+                    placeholder="Enter checklist item..."
+                    class="checklist-text swal2-input"
+                    style="flex: 1; margin: 0;"
+                  >
+                  <button
+                    type="button"
+                    class="checklist-delete-btn"
+                    style="margin-left: 8px; background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px;"
+                    onclick="this.parentElement.remove()"
+                  >
+                    ×
+                  </button>
+                `;
+                container.appendChild(newItem);
+              };
+            },
             preConfirm: () => {
+              const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
+                text: item.querySelector('.checklist-text').value,
+                completed: item.querySelector('.checklist-checkbox').checked
+              })).filter(item => item.text.trim() !== '');
+
               const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
               const selectedResponsibles = selectedCheckboxes.length > 0 
                 ? Array.from(selectedCheckboxes).map(cb => cb.value)
@@ -626,7 +849,8 @@ function Board() {
               return {
                 title: document.getElementById('swal-input-title').value,
                 responsible: selectedResponsibles,
-                description: document.getElementById('swal-input-description').value
+                description: document.getElementById('swal-input-description').value,
+                checklist: checklistItems
               };
             }
           }).then((result) => {
@@ -729,7 +953,6 @@ function Board() {
       });
     } else if (card.archived) {
       contentDiv.addEventListener("click", () => {
-        // Mostrar vista de solo lectura para tarjetas archivadas
         Swal.fire({
           title: '<h2 class="swal2-title">📄 Archived Card</h2>',
           html: `
@@ -770,7 +993,6 @@ function Board() {
           cancelButtonColor: '#28a745'
         }).then((result) => {
           if (result.dismiss === Swal.DismissReason.cancel && userRole === "edition") {
-            // Confirm unarchive
             Swal.fire({
               title: 'Unarchive card?',
               text: "The card will be active again on the board",
@@ -829,16 +1051,13 @@ function Board() {
     buttonsDiv.style.gap = "8px";
     buttonsDiv.style.marginTop = "10px";
 
-    // Agregar indicador visual si la tarjeta está archivada
-    if (card.archived) {
-      const archivedBadge = document.createElement("div");
-      archivedBadge.className = "archived-badge";
-      archivedBadge.textContent = "🗃️ Archived";
-      contentDiv.appendChild(archivedBadge);
-      
-      // Agregar estilo de opacidad a la tarjeta archivada
-      div.style.opacity = "0.7";
-      div.classList.add("archived");
+    // Solo mostrar el botón de duplicar si el usuario tiene permisos de edición
+    if (userRole === "edition" && !card.archived) {
+      const duplicateBtn = document.createElement("button");
+      duplicateBtn.textContent = "Duplicate";
+      duplicateBtn.className = "edit-btn";
+      duplicateBtn.onclick = () => duplicateCard(card);
+      buttonsDiv.appendChild(duplicateBtn);
     }
 
     div.appendChild(contentDiv);
