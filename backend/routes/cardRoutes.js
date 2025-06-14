@@ -4,7 +4,7 @@ const Card = require('../models/Card');
 
 // Crear una nueva tarjeta vinculada a un tablero
 router.post('/', async (req, res) => {
-    const { title, responsible, description, column, boardId, checklist } = req.body;
+    const { title, responsible, description, column, boardId, checklist, labels } = req.body;
 
     try {
         if (!boardId) {
@@ -19,13 +19,18 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: "El campo checklist debe ser un array" });
         }
 
+        if (labels && !Array.isArray(labels)) {
+            return res.status(400).json({ error: "El campo labels debe ser un array" });
+        }
+
         const newCard = new Card({ 
             title, 
             responsible, 
             description, 
             column, 
             boardId,
-            checklist: checklist || []
+            checklist: checklist || [],
+            labels: labels || []
         });
         await newCard.save();
         res.status(201).json({ message: "Tarjeta creada exitosamente", card: newCard });
@@ -72,7 +77,7 @@ router.get('/:id', async (req, res) => {
 
 // Actualizar una tarjeta
 router.put('/:id', async (req, res) => {
-    const { title, responsible, description, column, checklist } = req.body;
+    const { title, responsible, description, column, checklist, labels } = req.body;
     try {
         if (responsible && !Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
@@ -82,6 +87,10 @@ router.put('/:id', async (req, res) => {
             return res.status(400).json({ error: "El campo checklist debe ser un array" });
         }
 
+        if (labels && !Array.isArray(labels)) {
+            return res.status(400).json({ error: "El campo labels debe ser un array" });
+        }
+
         const updatedCard = await Card.findByIdAndUpdate(
             req.params.id,
             { 
@@ -89,7 +98,8 @@ router.put('/:id', async (req, res) => {
                 ...(responsible && { responsible }),
                 ...(description && { description }),
                 ...(column && { column }),
-                ...(checklist && { checklist })
+                ...(checklist && { checklist }),
+                ...(labels && { labels })
             },
             { new: true }
         );
@@ -162,7 +172,8 @@ router.post('/duplicate/:id', async (req, res) => {
             description: originalCard.description,
             column: originalCard.column,
             boardId: originalCard.boardId,
-            checklist: originalCard.checklist || []
+            checklist: originalCard.checklist || [],
+            labels: originalCard.labels || []
         });
 
         await duplicatedCard.save();

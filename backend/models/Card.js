@@ -9,6 +9,7 @@ const cardSchema = new mongoose.Schema({
         text: { type: String, required: true },
         completed: { type: Boolean, default: false }
     }],
+    labels: [{ type: String }], // Array de etiquetas (opcional)
     createdBy: { type: mongoose.Schema.Types.ObjectId, ref: "User", required: false }, // 📌 Ya no es obligatorio
     boardId: { type: mongoose.Schema.Types.ObjectId, ref: "Board", required: true }, // 📌 Se mantiene obligatorio
     archived: { type: Boolean, default: false }, // Campo para indicar si la tarjeta está archivada
