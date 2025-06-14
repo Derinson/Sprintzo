@@ -10,6 +10,18 @@ function Board() {
   const [contributors, setContributors] = useState([]);
   const [showArchived, setShowArchived] = useState(false); // Estado para mostrar/ocultar archivadas
 
+  // Definir los colores disponibles para las etiquetas
+  const labelColors = {
+    red: { color: '#ff4444', name: 'Alta Prioridad' },
+    orange: { color: '#ffbb33', name: 'Media Prioridad' },
+    green: { color: '#00C851', name: 'Baja Prioridad' },
+    blue: { color: '#33b5e5', name: 'Bug' },
+    purple: { color: '#aa66cc', name: 'Mejora' },
+    yellow: { color: '#ffeb3b', name: 'Documentación' },
+    pink: { color: '#ff4081', name: 'Diseño' },
+    teal: { color: '#009688', name: 'Testing' }
+  };
+
   const toggleMenu = () => {
     setMenuOpen(!menuOpen); // Alterna entre abierto/cerrado
   };
@@ -235,7 +247,9 @@ function Board() {
                     title: currentCard.title,
                     responsible: currentCard.responsible,
                     description: currentCard.description,
-                    column: newColumn
+                    column: newColumn,
+                    labels: currentCard.labels,
+                    checklist: currentCard.checklist
                   })
                 })
                 .then(res => {
@@ -292,6 +306,7 @@ function Board() {
         responsible: originalCard.responsible,
         description: originalCard.description,
         checklist: originalCard.checklist,
+        labels: originalCard.labels,
         column: originalCard.column,
         boardId: boardId
       })
@@ -342,153 +357,201 @@ function Board() {
         if (!titleResult.value) return;
 
         Swal.fire({
-          title: '<h2 class="swal2-title">Assign Responsibles</h2>',
+          title: '<h2 class="swal2-title">Assign Labels</h2>',
           html: `
-            <div class="contributor-selector">
-              ${contribuyentes.map(c => `
-                <div class="contributor-item">
-                  <input type="checkbox" 
-                         id="check-${c.email}" 
-                         value="${c.email}" 
-                         class="contributor-checkbox">
-                  <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
-                    ${getInitials(c.email)}
-                  </div>
-                  <label for="check-${c.email}">${c.email}</label>
+            <div class="labels-selector">
+              ${Object.entries(labelColors).map(([key, value]) => `
+                <div 
+                  class="label-badge-selectable" 
+                  data-label="${key}" 
+                  style="background: ${value.color}; color: #fff;"
+                >
+                  ${value.name}
                 </div>
               `).join('')}
-              <div class="contributor-item unassigned">
-                <div class="contributor-avatar" style="background-color: #95a5a6">
-                  UA
-                </div>
-                <span class="unassigned-label">Unassigned (default)</span>
-              </div>
             </div>
+            <input type="hidden" id="selected-labels" value="">
           `,
           showCancelButton: true,
           confirmButtonText: 'Next',
           cancelButtonText: 'Cancel',
+          didOpen: () => {
+            const selected = new Set();
+            document.querySelectorAll('.label-badge-selectable').forEach(badge => {
+              badge.onclick = () => {
+                const label = badge.dataset.label;
+                if (selected.has(label)) {
+                  selected.delete(label);
+                  badge.classList.remove('selected');
+                } else {
+                  selected.add(label);
+                  badge.classList.add('selected');
+                }
+                document.getElementById('selected-labels').value = Array.from(selected).join(',');
+              };
+            });
+          },
           preConfirm: () => {
-            const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
-            const selectedResponsibles = selectedCheckboxes.length > 0 
-              ? Array.from(selectedCheckboxes).map(cb => cb.value)
-              : ['Unassigned'];
-            
+            const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
             return {
               title: titleResult.value,
-              responsible: selectedResponsibles
+              labels: selectedLabels
             };
           }
-        }).then(responsibleResult => {
-          if (!responsibleResult.value) return;
+        }).then(labelsResult => {
+          if (!labelsResult.value) return;
 
           Swal.fire({
-            title: '<h2 class="swal2-title">Task Description</h2>',
-            input: "textarea",
-            inputPlaceholder: "Enter description",
+            title: '<h2 class="swal2-title">Assign Responsibles</h2>',
+            html: `
+              <div class="contributor-selector">
+                ${contribuyentes.map(c => `
+                  <div class="contributor-item">
+                    <input type="checkbox" 
+                           id="check-${c.email}" 
+                           value="${c.email}" 
+                           class="contributor-checkbox">
+                    <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
+                      ${getInitials(c.email)}
+                    </div>
+                    <label for="check-${c.email}">${c.email}</label>
+                  </div>
+                `).join('')}
+                <div class="contributor-item unassigned">
+                  <div class="contributor-avatar" style="background-color: #95a5a6">
+                    UA
+                  </div>
+                  <span class="unassigned-label">Unassigned (default)</span>
+                </div>
+              </div>
+            `,
             showCancelButton: true,
             confirmButtonText: 'Next',
             cancelButtonText: 'Cancel',
-          }).then(descriptionResult => {
-            if (!descriptionResult.value) return;
+            preConfirm: () => {
+              const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+              const selectedResponsibles = selectedCheckboxes.length > 0 
+                ? Array.from(selectedCheckboxes).map(cb => cb.value)
+                : ['Unassigned'];
+              
+              return {
+                title: labelsResult.value.title,
+                labels: labelsResult.value.labels,
+                responsible: selectedResponsibles
+              };
+            }
+          }).then(responsibleResult => {
+            if (!responsibleResult.value) return;
 
             Swal.fire({
-              title: '<h2 class="swal2-title">Add Checklist (Optional)</h2>',
-              html: `
-                <div style="text-align: left; padding: 10px;">
-                  <div id="checklist-container" style="margin-bottom: 10px;"></div>
-                  <button
-                    type="button"
-                    onclick="addChecklistItem()"
-                    style="background: #4CAF50; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;"
-                  >
-                    + Add Item
-                  </button>
-                </div>
-              `,
+              title: '<h2 class="swal2-title">Task Description</h2>',
+              input: "textarea",
+              inputPlaceholder: "Enter description",
               showCancelButton: true,
-              confirmButtonText: 'Create Task',
+              confirmButtonText: 'Next',
               cancelButtonText: 'Cancel',
-              didOpen: () => {
-                window.addChecklistItem = () => {
-                  const container = document.getElementById('checklist-container');
-                  const newItem = document.createElement('div');
-                  newItem.className = 'checklist-item';
-                  newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
-                  newItem.innerHTML = `
-                    <input
-                      type="checkbox"
-                      class="checklist-checkbox"
-                      style="margin-right: 8px;"
-                    >
-                    <input
-                      type="text"
-                      placeholder="Enter checklist item..."
-                      class="checklist-text swal2-input"
-                      style="flex: 1; margin: 0;"
-                    >
+            }).then(descriptionResult => {
+              if (!descriptionResult.value) return;
+
+              Swal.fire({
+                title: '<h2 class="swal2-title">Add Checklist (Optional)</h2>',
+                html: `
+                  <div style="text-align: left; padding: 10px;">
+                    <div id="checklist-container" style="margin-bottom: 10px;"></div>
                     <button
                       type="button"
-                      class="checklist-delete-btn"
-                      style="margin-left: 8px; background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px;"
-                      onclick="this.parentElement.remove()"
+                      onclick="addChecklistItem()"
+                      style="background: #4CAF50; color: white; border: none; border-radius: 4px; padding: 8px 16px; cursor: pointer;"
                     >
-                      ×
+                      + Add Item
                     </button>
-                  `;
-                  container.appendChild(newItem);
-                };
-              },
-              preConfirm: () => {
-                const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
-                  text: item.querySelector('.checklist-text').value,
-                  completed: item.querySelector('.checklist-checkbox').checked
-                })).filter(item => item.text.trim() !== '');
-
-                return checklistItems;
-              }
-            }).then(checklistResult => {
-              if (!checklistResult.value) return;
-
-              const columnChoice = "todo";
-              const token = localStorage.getItem("token");
-
-              fetch("http://localhost:5000/api/cards", {
-                method: "POST",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${token}`
+                  </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Create Task',
+                cancelButtonText: 'Cancel',
+                didOpen: () => {
+                  window.addChecklistItem = () => {
+                    const container = document.getElementById('checklist-container');
+                    const newItem = document.createElement('div');
+                    newItem.className = 'checklist-item';
+                    newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
+                    newItem.innerHTML = `
+                      <input
+                        type="checkbox"
+                        class="checklist-checkbox"
+                        style="margin-right: 8px;"
+                      >
+                      <input
+                        type="text"
+                        placeholder="Enter checklist item..."
+                        class="checklist-text swal2-input"
+                        style="flex: 1; margin: 0;"
+                      >
+                      <button
+                        type="button"
+                        class="checklist-delete-btn"
+                        style="margin-left: 8px; background: #ff4444; color: white; border: none; border-radius: 4px; padding: 4px 8px;"
+                        onclick="this.parentElement.remove()"
+                      >
+                        ×
+                      </button>
+                    `;
+                    container.appendChild(newItem);
+                  };
                 },
-                body: JSON.stringify({
-                  title: responsibleResult.value.title,
-                  responsible: responsibleResult.value.responsible,
-                  description: descriptionResult.value,
-                  checklist: checklistResult.value,
-                  column: columnChoice,
-                  boardId
+                preConfirm: () => {
+                  const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
+                    text: item.querySelector('.checklist-text').value,
+                    completed: item.querySelector('.checklist-checkbox').checked
+                  })).filter(item => item.text.trim() !== '');
+
+                  return checklistItems;
+                }
+              }).then(checklistResult => {
+                if (!checklistResult.value) return;
+
+                const columnChoice = "todo";
+                const token = localStorage.getItem("token");
+
+                fetch("http://localhost:5000/api/cards", {
+                  method: "POST",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${token}`
+                  },
+                  body: JSON.stringify({
+                    title: responsibleResult.value.title,
+                    labels: responsibleResult.value.labels,
+                    responsible: responsibleResult.value.responsible,
+                    description: descriptionResult.value,
+                    checklist: checklistResult.value,
+                    column: columnChoice,
+                    boardId
+                  })
                 })
-              })
-              .then(res => {
-                if (!res.ok) throw new Error('Error saving task');
-                return res.json();
-              })
-              .then(() => {
-                Swal.fire({
-                  title: "Saved!",
-                  text: "Task has been created successfully",
-                  icon: "success",
-                  timer: 1500,
-                  timerProgressBar: true,
-                  showConfirmButton: false
-                });
-                loadCards(boardId);
-              })
-              .catch(err => {
-                console.error(err);
-                Swal.fire({
-                  title: "Error",
-                  text: "Could not save task to database",
-                  icon: "error"
+                .then(res => {
+                  if (!res.ok) throw new Error('Error saving task');
+                  return res.json();
+                })
+                .then(() => {
+                  Swal.fire({
+                    title: "Saved!",
+                    text: "Task has been created successfully",
+                    icon: "success",
+                    timer: 1500,
+                    timerProgressBar: true,
+                    showConfirmButton: false
+                  });
+                  loadCards(boardId);
+                })
+                .catch(err => {
+                  console.error(err);
+                  Swal.fire({
+                    title: "Error",
+                    text: "Could not save task to database",
+                    icon: "error"
+                  });
                 });
               });
             });
@@ -516,45 +579,30 @@ function Board() {
     contentDiv.style.transition = "background-color 0.3s ease";
     contentDiv.style.position = "relative";
 
-    // Header container para título y avatares
+    // HEADER: responsables (izq) y labels (der)
     const headerContainer = document.createElement("div");
     headerContainer.style.display = "flex";
     headerContainer.style.justifyContent = "space-between";
     headerContainer.style.alignItems = "flex-start";
-    headerContainer.style.marginBottom = "12px";
+    headerContainer.style.marginBottom = "8px";
 
-    const titleElement = document.createElement("h3");
-    titleElement.className = "titl";
-    titleElement.textContent = `📌 ${card.title}`;
-    titleElement.style.margin = "0";
-    titleElement.style.fontSize = "16px";
-    titleElement.style.fontWeight = "600";
-    titleElement.style.color = "#2c3e50";
-    titleElement.style.flex = "1";
-    titleElement.style.marginRight = "10px";
-
-    // Contenedor de avatares
+    // Responsables (izquierda)
     const responsibleContainer = document.createElement("div");
     responsibleContainer.style.display = "flex";
     responsibleContainer.style.alignItems = "center";
     responsibleContainer.style.gap = "4px";
     responsibleContainer.style.flexWrap = "wrap";
     responsibleContainer.style.minWidth = "fit-content";
-
     const responsibles = Array.isArray(card.responsible) ? card.responsible : [card.responsible];
-    
-    // Contenedor para los avatares
     const avatarsContainer = document.createElement("div");
     avatarsContainer.style.display = "flex";
     avatarsContainer.style.gap = "2px";
     avatarsContainer.style.flexDirection = "row-reverse";
-
     responsibles.forEach(responsible => {
       const avatarContainer = document.createElement("div");
       avatarContainer.style.position = "relative";
       avatarContainer.style.display = "inline-block";
       avatarContainer.style.marginLeft = "-8px";
-
       const avatar = document.createElement("div");
       avatar.style.width = "24px";
       avatar.style.height = "24px";
@@ -571,7 +619,6 @@ function Board() {
       avatar.style.boxSizing = "border-box";
       avatar.textContent = getInitials(responsible);
       avatar.title = responsible;
-
       avatar.onmouseover = () => {
         avatar.style.transform = "scale(1.1)";
         avatar.style.transition = "transform 0.2s ease";
@@ -581,29 +628,70 @@ function Board() {
         avatar.style.transform = "scale(1)";
         avatar.style.zIndex = "0";
       };
-
       avatarContainer.appendChild(avatar);
       avatarsContainer.appendChild(avatarContainer);
     });
-
     responsibleContainer.appendChild(avatarsContainer);
-    headerContainer.appendChild(titleElement);
-    headerContainer.appendChild(responsibleContainer);
 
-    // Contenedor de descripción con icono
+    // Labels (derecha)
+    const labelsContainer = document.createElement("div");
+    labelsContainer.className = "labels-container";
+    labelsContainer.style.display = "flex";
+    labelsContainer.style.flexWrap = "wrap";
+    labelsContainer.style.gap = "6px";
+    labelsContainer.style.justifyContent = "flex-end";
+    labelsContainer.style.alignItems = "center";
+    labelsContainer.style.maxWidth = "60%";
+    if (card.labels && card.labels.length > 0) {
+      card.labels.forEach(label => {
+        const labelElement = document.createElement("div");
+        labelElement.className = "label";
+        labelElement.style.background = labelColors[label]?.color || "#888";
+        labelElement.textContent = labelColors[label]?.name || label;
+        labelsContainer.appendChild(labelElement);
+      });
+    }
+
+    headerContainer.appendChild(responsibleContainer);
+    headerContainer.appendChild(labelsContainer);
+    contentDiv.appendChild(headerContainer);
+
+    // Título con icono
+    const titleRow = document.createElement("div");
+    titleRow.style.display = "flex";
+    titleRow.style.alignItems = "center";
+    titleRow.style.gap = "8px";
+    titleRow.style.margin = "0 0 6px 0";
+
+    const pinIcon = document.createElement("span");
+    pinIcon.textContent = "📌";
+    pinIcon.style.fontSize = "18px";
+    pinIcon.style.marginRight = "2px";
+
+    const titleElement = document.createElement("h3");
+    titleElement.className = "titl";
+    titleElement.textContent = card.title;
+    titleElement.style.margin = "0";
+    titleElement.style.fontSize = "16px";
+    titleElement.style.fontWeight = "600";
+    titleElement.style.color = "#2c3e50";
+
+    titleRow.appendChild(pinIcon);
+    titleRow.appendChild(titleElement);
+    contentDiv.appendChild(titleRow);
+
+    // Descripción
     const descriptionContainer = document.createElement("div");
-    descriptionContainer.style.marginTop = "8px";
+    descriptionContainer.style.marginTop = "4px";
     descriptionContainer.style.display = "flex";
     descriptionContainer.style.gap = "8px";
     descriptionContainer.style.alignItems = "flex-start";
     descriptionContainer.style.backgroundColor = "#f8f9fa";
     descriptionContainer.style.padding = "8px";
     descriptionContainer.style.borderRadius = "6px";
-
     const descriptionIcon = document.createElement("span");
     descriptionIcon.textContent = "📝";
     descriptionIcon.style.fontSize = "14px";
-
     const descriptionElement = document.createElement("p");
     descriptionElement.className = "description";
     descriptionElement.style.margin = "0";
@@ -612,11 +700,8 @@ function Board() {
     descriptionElement.style.flex = "1";
     descriptionElement.style.lineHeight = "1.4";
     descriptionElement.textContent = card.description;
-
     descriptionContainer.appendChild(descriptionIcon);
     descriptionContainer.appendChild(descriptionElement);
-
-    contentDiv.appendChild(headerContainer);
     contentDiv.appendChild(descriptionContainer);
 
     // Add checklist to card display
@@ -720,6 +805,24 @@ function Board() {
                     value="${card.title}"
                   >
                 </div>
+
+                <div class="form-group" style="margin-bottom: 20px;">
+                  <label class="form-label">
+                    🏷️ Labels:
+                  </label>
+                  <div class="labels-selector">
+                    ${Object.entries(labelColors).map(([key, value]) => `
+                      <div 
+                        class="label-badge-selectable${card.labels && card.labels.includes(key) ? ' selected' : ''}" 
+                        data-label="${key}" 
+                        style="background: ${value.color}; color: #fff;"
+                      >
+                        ${value.name}
+                      </div>
+                    `).join('')}
+                  </div>
+                  <input type="hidden" id="selected-labels" value="${card.labels ? card.labels.join(',') : ''}">
+                </div>
                 
                 <div class="form-group" style="margin-bottom: 20px;">
                   <label class="form-label">
@@ -806,6 +909,21 @@ function Board() {
             cancelButtonColor: '#dc3545',
             reverseButtons: true,
             didOpen: () => {
+              const selected = new Set(card.labels || []);
+              document.querySelectorAll('.label-badge-selectable').forEach(badge => {
+                if (selected.has(badge.dataset.label)) badge.classList.add('selected');
+                badge.onclick = () => {
+                  const label = badge.dataset.label;
+                  if (selected.has(label)) {
+                    selected.delete(label);
+                    badge.classList.remove('selected');
+                  } else {
+                    selected.add(label);
+                    badge.classList.add('selected');
+                  }
+                  document.getElementById('selected-labels').value = Array.from(selected).join(',');
+                };
+              });
               window.addChecklistItem = () => {
                 const container = document.getElementById('checklist-container');
                 const newItem = document.createElement('div');
@@ -845,12 +963,15 @@ function Board() {
               const selectedResponsibles = selectedCheckboxes.length > 0 
                 ? Array.from(selectedCheckboxes).map(cb => cb.value)
                 : ['Unassigned'];
+
+              const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
               
               return {
                 title: document.getElementById('swal-input-title').value,
                 responsible: selectedResponsibles,
                 description: document.getElementById('swal-input-description').value,
-                checklist: checklistItems
+                checklist: checklistItems,
+                labels: selectedLabels
               };
             }
           }).then((result) => {
