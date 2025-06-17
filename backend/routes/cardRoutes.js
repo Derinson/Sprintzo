@@ -1,6 +1,7 @@
 const express = require('express');
 const router = express.Router();
 const Card = require('../models/Card');
+const authenticateToken = require("../middleware/authenticateToken");
 
 // Crear una nueva tarjeta vinculada a un tablero
 router.post('/', async (req, res) => {
@@ -23,11 +24,11 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: "El campo labels debe ser un array" });
         }
 
-        const newCard = new Card({ 
-            title, 
-            responsible, 
-            description, 
-            column, 
+        const newCard = new Card({
+            title,
+            responsible,
+            description,
+            column,
             boardId,
             checklist: checklist || [],
             labels: labels || []
@@ -45,7 +46,7 @@ router.get('/board/:boardId', async (req, res) => {
     try {
         const { archived } = req.query; // Obtener el parámetro de consulta
         const query = { boardId: req.params.boardId };
-        
+
         // Si se especifica archived, filtrar por ese valor
         if (archived !== undefined) {
             query.archived = archived === 'true';
@@ -53,7 +54,7 @@ router.get('/board/:boardId', async (req, res) => {
             // Por defecto, mostrar solo las tarjetas no archivadas
             query.archived = false;
         }
-        
+
         const cards = await Card.find(query);
         res.status(200).json(cards);
     } catch (error) {
@@ -93,7 +94,7 @@ router.put('/:id', async (req, res) => {
 
         const updatedCard = await Card.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 ...(title && { title }),
                 ...(responsible && { responsible }),
                 ...(description && { description }),
@@ -115,7 +116,7 @@ router.put('/:id/archive', async (req, res) => {
     try {
         const updatedCard = await Card.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 archived: true,
                 archivedAt: new Date()
             },
@@ -133,7 +134,7 @@ router.put('/:id/unarchive', async (req, res) => {
     try {
         const updatedCard = await Card.findByIdAndUpdate(
             req.params.id,
-            { 
+            {
                 archived: false,
                 archivedAt: null
             },
@@ -185,5 +186,52 @@ router.post('/duplicate/:id', async (req, res) => {
     }
 });
 
-module.exports = router;
+// Adjuntar archivos
+const multer = require('multer');
+const path = require('path');
 
+const storage = multer.diskStorage({
+    destination: (req, file, cb) => {
+        cb(null, 'uploads/')
+    },
+    filename: (req, file, cb) => {
+        cb(null, `${Date.now()}-${file.originalname}`)
+    }
+});
+
+const upload = multer({ storage });
+
+// Subir archivos
+router.post('/:id/attachments', authenticateToken, upload.array('files'), async (req, res) => {
+    try {
+        const card = await Card.findById(req.params.id);
+        if (!card) return res.status(404).json({ message: 'Card not found' });
+
+        const newAttachments = req.files.map(file => ({
+            filename: file.originalname,
+            url: `http://localhost:5000/uploads/${file.filename}`
+        }));
+
+        card.attachments.push(...newAttachments);
+        await card.save();
+
+        res.json(card.attachments);
+    } catch (error) {
+        res.status(500).json({ message: 'Error uploading files', error });
+    }
+});
+// Borrar achivos adjuntos
+router.delete('/cards/:cardId/attachments/:attachmentId', authenticateToken, async (req, res) => {
+    const { cardId, attachmentId } = req.params;
+
+    const card = await Card.findById(cardId);
+    if (!card) return res.status(404).json({ message: "Card not found" });
+
+    // Eliminar adjunto del array de la tarjeta
+    card.attachments = card.attachments.filter(att => att._id.toString() !== attachmentId);
+    await card.save();
+
+    res.json({ message: "Attachment deleted successfully" });
+});
+
+module.exports = router;

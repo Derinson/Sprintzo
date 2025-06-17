@@ -33,7 +33,7 @@ function Board() {
 
   // Función para obtener el color según el rol
   const getRoleColor = (role) => {
-    switch(role) {
+    switch (role) {
       case "edition": return "#4CAF50";
       case "reading": return "#2196F3";
       default: return "#f44336";
@@ -42,7 +42,7 @@ function Board() {
 
   // Función para obtener el icono según el rol
   const getRoleIcon = (role) => {
-    switch(role) {
+    switch (role) {
       case "edition": return "✏️";
       case "reading": return "👁️";
       default: return "⛔";
@@ -59,7 +59,7 @@ function Board() {
   // Función para obtener un color basado en el email
   const getRandomColor = (email) => {
     const colors = [
-      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4', 
+      '#FF6B6B', '#4ECDC4', '#45B7D1', '#96CEB4',
       '#FFEEAD', '#D4A5A5', '#9B59B6', '#3498DB',
       '#E67E22', '#27AE60', '#F1C40F', '#E74C3C'
     ];
@@ -85,25 +85,25 @@ function Board() {
         headers: { "Authorization": `Bearer ${localStorage.getItem("token")}` }
       })
     ])
-    .then(([rolRes, contribRes]) => Promise.all([rolRes.json(), contribRes.json()]))
-    .then(([rolData, contribData]) => {
-      setUserRole(rolData.rol);
-      setContributors(contribData);
+      .then(([rolRes, contribRes]) => Promise.all([rolRes.json(), contribRes.json()]))
+      .then(([rolData, contribData]) => {
+        setUserRole(rolData.rol);
+        setContributors(contribData);
 
-      if (rolData.rol === "reading") {
-        document.documentElement.style.setProperty('--action-disabled-opacity', '0.6');
-        document.documentElement.style.setProperty('--action-disabled-cursor', 'not-allowed');
-      }
-    })
-    .catch(error => {
-      console.error("Error:", error);
-      Swal.fire({
-        title: "Error",
-        text: "There was a problem loading the data",
-        icon: "error",
-        confirmButtonText: "OK"
+        if (rolData.rol === "reading") {
+          document.documentElement.style.setProperty('--action-disabled-opacity', '0.6');
+          document.documentElement.style.setProperty('--action-disabled-cursor', 'not-allowed');
+        }
+      })
+      .catch(error => {
+        console.error("Error:", error);
+        Swal.fire({
+          title: "Error",
+          text: "There was a problem loading the data",
+          icon: "error",
+          confirmButtonText: "OK"
+        });
       });
-    });
   }, []);
 
   useEffect(() => {
@@ -114,7 +114,7 @@ function Board() {
 
         const addTaskBtn = document.querySelector("#add-task-btn");
         const addColumnBtn = document.querySelector("#add-column-btn");
-        
+
         // Crear el encabezado del tablero
         const boardHeader = document.createElement("div");
         boardHeader.className = "board-header";
@@ -129,7 +129,7 @@ function Board() {
 
         const contributorsList = document.createElement("div");
         contributorsList.className = "contributors-list";
-        
+
         contributors.forEach(contributor => {
           const avatar = document.createElement("div");
           avatar.className = "contributor-avatar";
@@ -141,37 +141,37 @@ function Board() {
 
         contributorsSection.appendChild(contributorsLabel);
         contributorsSection.appendChild(contributorsList);
-        
+
         // Crear el contenedor de botones
         const actionButtonsContainer = document.createElement("div");
         actionButtonsContainer.className = "action-buttons-container";
-        
+
         // Crear el botón de archivados
         const toggleArchivedBtn = document.createElement("button");
         toggleArchivedBtn.id = "toggle-archived-btn";
         toggleArchivedBtn.className = "global-add-task-btn";
         toggleArchivedBtn.innerHTML = `<span>🗃️</span> ${showArchived ? 'Show Active' : 'Show Archived'}`;
-        
+
         toggleArchivedBtn.onclick = () => {
           const boardId = window.location.pathname.split("/board/")[1];
-          
+
           if (!showArchived) {
             fetch(`http://localhost:5000/api/cards/board/${boardId}?archived=true`)
-            .then(res => res.json())
-            .then(archivedCards => {
-              if (!archivedCards || archivedCards.length === 0) {
-                Swal.fire({
-                  title: "No Archived Cards",
-                  text: "There are no archived cards in this board yet",
-                  icon: "info",
-                  confirmButtonText: "OK"
-                });
-                return;
-              }
-              setShowArchived(true);
-              toggleArchivedBtn.innerHTML = `<span>🗃️</span> Show Active`;
-              loadCards(boardId);
-            });
+              .then(res => res.json())
+              .then(archivedCards => {
+                if (!archivedCards || archivedCards.length === 0) {
+                  Swal.fire({
+                    title: "No Archived Cards",
+                    text: "There are no archived cards in this board yet",
+                    icon: "info",
+                    confirmButtonText: "OK"
+                  });
+                  return;
+                }
+                setShowArchived(true);
+                toggleArchivedBtn.innerHTML = `<span>🗃️</span> Show Active`;
+                loadCards(boardId);
+              });
           } else {
             setShowArchived(false);
             toggleArchivedBtn.innerHTML = `<span>🗃️</span> Show Archived`;
@@ -235,39 +235,39 @@ function Board() {
                   "Authorization": `Bearer ${localStorage.getItem("token")}`
                 }
               })
-              .then(res => res.json())
-              .then(currentCard => {
-                fetch(`http://localhost:5000/api/cards/${cardId}`, {
-                  method: "PUT",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${localStorage.getItem("token")}`
-                  },
-                  body: JSON.stringify({
-                    title: currentCard.title,
-                    responsible: currentCard.responsible,
-                    description: currentCard.description,
-                    column: newColumn,
-                    labels: currentCard.labels,
-                    checklist: currentCard.checklist
+                .then(res => res.json())
+                .then(currentCard => {
+                  fetch(`http://localhost:5000/api/cards/${cardId}`, {
+                    method: "PUT",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: JSON.stringify({
+                      title: currentCard.title,
+                      responsible: currentCard.responsible,
+                      description: currentCard.description,
+                      column: newColumn,
+                      labels: currentCard.labels,
+                      checklist: currentCard.checklist
+                    })
                   })
-                })
-                .then(res => {
-                  if (!res.ok) throw new Error("Error al mover la tarjeta");
-                  return res.json();
-                })
-                .then(() => {
-                  loadCards(boardId);
+                    .then(res => {
+                      if (!res.ok) throw new Error("Error al mover la tarjeta");
+                      return res.json();
+                    })
+                    .then(() => {
+                      loadCards(boardId);
+                    })
+                    .catch(err => {
+                      console.error(err);
+                      Swal.fire('Error', 'No se pudo mover la tarjeta', 'error');
+                    });
                 })
                 .catch(err => {
                   console.error(err);
-                  Swal.fire('Error', 'No se pudo mover la tarjeta', 'error');
+                  Swal.fire('Error', 'No se pudo obtener la información de la tarjeta', 'error');
                 });
-              })
-              .catch(err => {
-                console.error(err);
-                Swal.fire('Error', 'No se pudo obtener la información de la tarjeta', 'error');
-              });
             });
           });
         }
@@ -311,24 +311,24 @@ function Board() {
         boardId: boardId
       })
     })
-    .then(res => {
-      if (!res.ok) throw new Error('Error duplicating task');
-      return res.json();
-    })
-    .then(() => {
-      Swal.fire({
-        title: "Duplicated!",
-        text: "Task has been duplicated successfully",
-        icon: "success",
-        timer: 1500,
-        showConfirmButton: false
+      .then(res => {
+        if (!res.ok) throw new Error('Error duplicating task');
+        return res.json();
+      })
+      .then(() => {
+        Swal.fire({
+          title: "Duplicated!",
+          text: "Task has been duplicated successfully",
+          icon: "success",
+          timer: 1500,
+          showConfirmButton: false
+        });
+        loadCards(boardId);
+      })
+      .catch(err => {
+        console.error(err);
+        Swal.fire('Error', 'Could not duplicate the task', 'error');
       });
-      loadCards(boardId);
-    })
-    .catch(err => {
-      console.error(err);
-      Swal.fire('Error', 'Could not duplicate the task', 'error');
-    });
   }
 
   function addTask() {
@@ -339,26 +339,26 @@ function Board() {
         "Authorization": `Bearer ${localStorage.getItem("token")}`
       }
     })
-    .then(res => res.json())
-    .then(contribuyentes => {
-      if (!contribuyentes.length) {
-        Swal.fire("Error", "No contributors in this board.", "error");
-        return;
-      }
-
-      Swal.fire({
-        title: '<h2 class="swal2-title">New Task</h2>',
-        input: "text",
-        inputPlaceholder: "Enter title",
-        showCancelButton: true,
-        confirmButtonText: 'Next',
-        cancelButtonText: 'Cancel',
-      }).then(titleResult => {
-        if (!titleResult.value) return;
+      .then(res => res.json())
+      .then(contribuyentes => {
+        if (!contribuyentes.length) {
+          Swal.fire("Error", "No contributors in this board.", "error");
+          return;
+        }
 
         Swal.fire({
-          title: '<h2 class="swal2-title">Assign Labels</h2>',
-          html: `
+          title: '<h2 class="swal2-title">New Task</h2>',
+          input: "text",
+          inputPlaceholder: "Enter title",
+          showCancelButton: true,
+          confirmButtonText: 'Next',
+          cancelButtonText: 'Cancel',
+        }).then(titleResult => {
+          if (!titleResult.value) return;
+
+          Swal.fire({
+            title: '<h2 class="swal2-title">Assign Labels</h2>',
+            html: `
             <div class="labels-selector">
               ${Object.entries(labelColors).map(([key, value]) => `
                 <div 
@@ -372,45 +372,45 @@ function Board() {
             </div>
             <input type="hidden" id="selected-labels" value="">
           `,
-          showCancelButton: true,
-          confirmButtonText: 'Next',
-          cancelButtonText: 'Cancel',
-          didOpen: () => {
-            const selected = new Set();
-            document.querySelectorAll('.label-badge-selectable').forEach(badge => {
-              badge.onclick = () => {
-                const label = badge.dataset.label;
-                if (selected.has(label)) {
-                  selected.delete(label);
-                  badge.classList.remove('selected');
-                } else {
-                  selected.add(label);
-                  badge.classList.add('selected');
-                }
-                document.getElementById('selected-labels').value = Array.from(selected).join(',');
+            showCancelButton: true,
+            confirmButtonText: 'Next',
+            cancelButtonText: 'Cancel',
+            didOpen: () => {
+              const selected = new Set();
+              document.querySelectorAll('.label-badge-selectable').forEach(badge => {
+                badge.onclick = () => {
+                  const label = badge.dataset.label;
+                  if (selected.has(label)) {
+                    selected.delete(label);
+                    badge.classList.remove('selected');
+                  } else {
+                    selected.add(label);
+                    badge.classList.add('selected');
+                  }
+                  document.getElementById('selected-labels').value = Array.from(selected).join(',');
+                };
+              });
+            },
+            preConfirm: () => {
+              const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
+              return {
+                title: titleResult.value,
+                labels: selectedLabels
               };
-            });
-          },
-          preConfirm: () => {
-            const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
-            return {
-              title: titleResult.value,
-              labels: selectedLabels
-            };
-          }
-        }).then(labelsResult => {
-          if (!labelsResult.value) return;
+            }
+          }).then(labelsResult => {
+            if (!labelsResult.value) return;
 
-          Swal.fire({
-            title: '<h2 class="swal2-title">Assign Responsibles</h2>',
-            html: `
+            Swal.fire({
+              title: '<h2 class="swal2-title">Assign Responsibles</h2>',
+              html: `
               <div class="contributor-selector">
                 ${contribuyentes.map(c => `
                   <div class="contributor-item">
-                    <input type="checkbox" 
-                           id="check-${c.email}" 
-                           value="${c.email}" 
-                           class="contributor-checkbox">
+                    <input type="checkbox"
+                      id="check-${c.email}"
+                      value="${c.email}"
+                      class="contributor-checkbox">
                     <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
                       ${getInitials(c.email)}
                     </div>
@@ -425,37 +425,37 @@ function Board() {
                 </div>
               </div>
             `,
-            showCancelButton: true,
-            confirmButtonText: 'Next',
-            cancelButtonText: 'Cancel',
-            preConfirm: () => {
-              const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
-              const selectedResponsibles = selectedCheckboxes.length > 0 
-                ? Array.from(selectedCheckboxes).map(cb => cb.value)
-                : ['Unassigned'];
-              
-              return {
-                title: labelsResult.value.title,
-                labels: labelsResult.value.labels,
-                responsible: selectedResponsibles
-              };
-            }
-          }).then(responsibleResult => {
-            if (!responsibleResult.value) return;
-
-            Swal.fire({
-              title: '<h2 class="swal2-title">Task Description</h2>',
-              input: "textarea",
-              inputPlaceholder: "Enter description",
               showCancelButton: true,
               confirmButtonText: 'Next',
               cancelButtonText: 'Cancel',
-            }).then(descriptionResult => {
-              if (!descriptionResult.value) return;
+              preConfirm: () => {
+                const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+                const selectedResponsibles = selectedCheckboxes.length > 0
+                  ? Array.from(selectedCheckboxes).map(cb => cb.value)
+                  : ['Unassigned'];
+
+                return {
+                  title: labelsResult.value.title,
+                  labels: labelsResult.value.labels,
+                  responsible: selectedResponsibles
+                };
+              }
+            }).then(responsibleResult => {
+              if (!responsibleResult.value) return;
 
               Swal.fire({
-                title: '<h2 class="swal2-title">Add Checklist (Optional)</h2>',
-                html: `
+                title: '<h2 class="swal2-title">Task Description</h2>',
+                input: "textarea",
+                inputPlaceholder: "Enter description",
+                showCancelButton: true,
+                confirmButtonText: 'Next',
+                cancelButtonText: 'Cancel',
+              }).then(descriptionResult => {
+                if (!descriptionResult.value) return;
+
+                Swal.fire({
+                  title: '<h2 class="swal2-title">Add Checklist (Optional)</h2>',
+                  html: `
                   <div style="text-align: left; padding: 10px;">
                     <div id="checklist-container" style="margin-bottom: 10px;"></div>
                     <button
@@ -467,16 +467,16 @@ function Board() {
                     </button>
                   </div>
                 `,
-                showCancelButton: true,
-                confirmButtonText: 'Create Task',
-                cancelButtonText: 'Cancel',
-                didOpen: () => {
-                  window.addChecklistItem = () => {
-                    const container = document.getElementById('checklist-container');
-                    const newItem = document.createElement('div');
-                    newItem.className = 'checklist-item';
-                    newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
-                    newItem.innerHTML = `
+                  showCancelButton: true,
+                  confirmButtonText: 'Create Task',
+                  cancelButtonText: 'Cancel',
+                  didOpen: () => {
+                    window.addChecklistItem = () => {
+                      const container = document.getElementById('checklist-container');
+                      const newItem = document.createElement('div');
+                      newItem.className = 'checklist-item';
+                      newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
+                      newItem.innerHTML = `
                       <input
                         type="checkbox"
                         class="checklist-checkbox"
@@ -497,68 +497,68 @@ function Board() {
                         ×
                       </button>
                     `;
-                    container.appendChild(newItem);
-                  };
-                },
-                preConfirm: () => {
-                  const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
-                    text: item.querySelector('.checklist-text').value,
-                    completed: item.querySelector('.checklist-checkbox').checked
-                  })).filter(item => item.text.trim() !== '');
-
-                  return checklistItems;
-                }
-              }).then(checklistResult => {
-                if (!checklistResult.value) return;
-
-                const columnChoice = "todo";
-                const token = localStorage.getItem("token");
-
-                fetch("http://localhost:5000/api/cards", {
-                  method: "POST",
-                  headers: {
-                    "Content-Type": "application/json",
-                    "Authorization": `Bearer ${token}`
+                      container.appendChild(newItem);
+                    };
                   },
-                  body: JSON.stringify({
-                    title: responsibleResult.value.title,
-                    labels: responsibleResult.value.labels,
-                    responsible: responsibleResult.value.responsible,
-                    description: descriptionResult.value,
-                    checklist: checklistResult.value,
-                    column: columnChoice,
-                    boardId
+                  preConfirm: () => {
+                    const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
+                      text: item.querySelector('.checklist-text').value,
+                      completed: item.querySelector('.checklist-checkbox').checked
+                    })).filter(item => item.text.trim() !== '');
+
+                    return checklistItems;
+                  }
+                }).then(checklistResult => {
+                  if (!checklistResult.value) return;
+
+                  const columnChoice = "todo";
+                  const token = localStorage.getItem("token");
+
+                  fetch("http://localhost:5000/api/cards", {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      "Authorization": `Bearer ${token}`
+                    },
+                    body: JSON.stringify({
+                      title: responsibleResult.value.title,
+                      labels: responsibleResult.value.labels,
+                      responsible: responsibleResult.value.responsible,
+                      description: descriptionResult.value,
+                      checklist: checklistResult.value,
+                      column: columnChoice,
+                      boardId
+                    })
                   })
-                })
-                .then(res => {
-                  if (!res.ok) throw new Error('Error saving task');
-                  return res.json();
-                })
-                .then(() => {
-                  Swal.fire({
-                    title: "Saved!",
-                    text: "Task has been created successfully",
-                    icon: "success",
-                    timer: 1500,
-                    timerProgressBar: true,
-                    showConfirmButton: false
-                  });
-                  loadCards(boardId);
-                })
-                .catch(err => {
-                  console.error(err);
-                  Swal.fire({
-                    title: "Error",
-                    text: "Could not save task to database",
-                    icon: "error"
-                  });
+                    .then(res => {
+                      if (!res.ok) throw new Error('Error saving task');
+                      return res.json();
+                    })
+                    .then(() => {
+                      Swal.fire({
+                        title: "Saved!",
+                        text: "Task has been created successfully",
+                        icon: "success",
+                        timer: 1500,
+                        timerProgressBar: true,
+                        showConfirmButton: false
+                      });
+                      loadCards(boardId);
+                    })
+                    .catch(err => {
+                      console.error(err);
+                      Swal.fire({
+                        title: "Error",
+                        text: "Could not save task to database",
+                        icon: "error"
+                      });
+                    });
                 });
               });
             });
           });
         });
       });
-    });
   }
 
   function renderCard(card) {
@@ -780,28 +780,28 @@ function Board() {
             "Authorization": `Bearer ${localStorage.getItem("token")}`
           }
         })
-        .then(res => res.json())
-        .then(contribuyentes => {
-          if (!contribuyentes.length) {
-            return Swal.fire({
-              title: "Error",
-              text: "No contributors in this board.",
-              icon: "error",
-              showConfirmButton: true,
-            });
-          }
+          .then(res => res.json())
+          .then(contribuyentes => {
+            if (!contribuyentes.length) {
+              return Swal.fire({
+                title: "Error",
+                text: "No contributors in this board.",
+                icon: "error",
+                showConfirmButton: true,
+              });
+            }
 
-          Swal.fire({
-            title: '<h2 class="swal2-title">✏️ Edit Task</h2>',
-            html: `
+            Swal.fire({
+              title: '<h2 class="swal2-title">✏️ Edit Task</h2>',
+              html: `
               <div style="text-align: left; padding: 10px;">
                 <div class="form-group" style="margin-bottom: 20px;">
                   <label class="form-label">
                     📝 Title:
                   </label>
-                  <input 
-                    id="swal-input-title" 
-                    class="swal2-input" 
+                  <input
+                    id="swal-input-title"
+                    class="swal2-input"
                     value="${card.title}"
                   >
                 </div>
@@ -812,9 +812,9 @@ function Board() {
                   </label>
                   <div class="labels-selector">
                     ${Object.entries(labelColors).map(([key, value]) => `
-                      <div 
-                        class="label-badge-selectable${card.labels && card.labels.includes(key) ? ' selected' : ''}" 
-                        data-label="${key}" 
+                      <div
+                        class="label-badge-selectable${card.labels && card.labels.includes(key) ? ' selected' : ''}"
+                        data-label="${key}"
                         style="background: ${value.color}; color: #fff;"
                       >
                         ${value.name}
@@ -831,11 +831,11 @@ function Board() {
                   <div class="contributor-selector">
                     ${contribuyentes.map(c => `
                       <div class="contributor-item">
-                        <input type="checkbox" 
-                               id="edit-check-${c.email}" 
-                               value="${c.email}" 
-                               class="contributor-checkbox"
-                               ${Array.isArray(card.responsible) && card.responsible.includes(c.email) ? 'checked' : ''}>
+                        <input type="checkbox"
+                            id="edit-check-${c.email}"
+                            value="${c.email}"
+                            class="contributor-checkbox"
+                            ${Array.isArray(card.responsible) && card.responsible.includes(c.email) ? 'checked' : ''}>
                         <div class="contributor-avatar" style="background-color: ${getRandomColor(c.email)}">
                           ${getInitials(c.email)}
                         </div>
@@ -895,41 +895,57 @@ function Board() {
                   </button>
                 </div>
               </div>
+
+        <input type="file" id="file-input" multiple style="margin-top: 10px;">
+        <div id="attachment-list" style="margin-top:10px;"></div>
+
+${card.attachments && card.attachments.length > 0 ? `
+  <div style="margin-bottom: 15px;">
+    <label style="font-weight:bold;">📎 Existing Attachments:</label>
+    <ul style="padding-left:20px;">
+      ${card.attachments.map(att => `
+        <li>
+          <a href="${att.url}" target="_blank" download>${att.filename}</a>
+        </li>
+      `).join('')}
+    </ul>
+  </div>
+` : ''}
             `,
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonText: 'Save',
-            denyButtonText: 'Archive',
-            cancelButtonText: 'Delete',
-            showConfirmButton: true,
-            showDenyButton: true,
-            showCancelButton: true,
-            confirmButtonColor: '#0052cc',
-            denyButtonColor: '#6c757d',
-            cancelButtonColor: '#dc3545',
-            reverseButtons: true,
-            didOpen: () => {
-              const selected = new Set(card.labels || []);
-              document.querySelectorAll('.label-badge-selectable').forEach(badge => {
-                if (selected.has(badge.dataset.label)) badge.classList.add('selected');
-                badge.onclick = () => {
-                  const label = badge.dataset.label;
-                  if (selected.has(label)) {
-                    selected.delete(label);
-                    badge.classList.remove('selected');
-                  } else {
-                    selected.add(label);
-                    badge.classList.add('selected');
-                  }
-                  document.getElementById('selected-labels').value = Array.from(selected).join(',');
-                };
-              });
-              window.addChecklistItem = () => {
-                const container = document.getElementById('checklist-container');
-                const newItem = document.createElement('div');
-                newItem.className = 'checklist-item';
-                newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
-                newItem.innerHTML = `
+              showDenyButton: true,
+              showCancelButton: true,
+              confirmButtonText: 'Save',
+              denyButtonText: 'Archive',
+              cancelButtonText: 'Delete',
+              showConfirmButton: true,
+              showDenyButton: true,
+              showCancelButton: true,
+              confirmButtonColor: '#0052cc',
+              denyButtonColor: '#6c757d',
+              cancelButtonColor: '#dc3545',
+              reverseButtons: true,
+              didOpen: () => {
+                const selected = new Set(card.labels || []);
+                document.querySelectorAll('.label-badge-selectable').forEach(badge => {
+                  if (selected.has(badge.dataset.label)) badge.classList.add('selected');
+                  badge.onclick = () => {
+                    const label = badge.dataset.label;
+                    if (selected.has(label)) {
+                      selected.delete(label);
+                      badge.classList.remove('selected');
+                    } else {
+                      selected.add(label);
+                      badge.classList.add('selected');
+                    }
+                    document.getElementById('selected-labels').value = Array.from(selected).join(',');
+                  };
+                });
+                window.addChecklistItem = () => {
+                  const container = document.getElementById('checklist-container');
+                  const newItem = document.createElement('div');
+                  newItem.className = 'checklist-item';
+                  newItem.style = 'display: flex; align-items: center; margin-bottom: 8px;';
+                  newItem.innerHTML = `
                   <input
                     type="checkbox"
                     class="checklist-checkbox"
@@ -950,108 +966,78 @@ function Board() {
                     ×
                   </button>
                 `;
-                container.appendChild(newItem);
-              };
-            },
-            preConfirm: () => {
-              const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
-                text: item.querySelector('.checklist-text').value,
-                completed: item.querySelector('.checklist-checkbox').checked
-              })).filter(item => item.text.trim() !== '');
+                  container.appendChild(newItem);
+                };
+              },
+              preConfirm: () => {
+                const checklistItems = Array.from(document.querySelectorAll('.checklist-item')).map(item => ({
+                  text: item.querySelector('.checklist-text').value,
+                  completed: item.querySelector('.checklist-checkbox').checked
+                })).filter(item => item.text.trim() !== '');
 
-              const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
-              const selectedResponsibles = selectedCheckboxes.length > 0 
-                ? Array.from(selectedCheckboxes).map(cb => cb.value)
-                : ['Unassigned'];
+                const selectedCheckboxes = document.querySelectorAll('.contributor-checkbox:checked');
+                const selectedResponsibles = selectedCheckboxes.length > 0
+                  ? Array.from(selectedCheckboxes).map(cb => cb.value)
+                  : ['Unassigned'];
 
-              const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
-              
-              return {
-                title: document.getElementById('swal-input-title').value,
-                responsible: selectedResponsibles,
-                description: document.getElementById('swal-input-description').value,
-                checklist: checklistItems,
-                labels: selectedLabels
-              };
-            }
-          }).then((result) => {
-            if (result.isConfirmed) {
-              fetch(`http://localhost:5000/api/cards/${card._id}`, {
-                method: "PUT",
-                headers: {
-                  "Content-Type": "application/json",
-                  "Authorization": `Bearer ${localStorage.getItem("token")}`
-                },
-                body: JSON.stringify(result.value)
-              })
-              .then(response => {
-                if (!response.ok) throw new Error('Error updating');
-                
-                Swal.fire({
-                  title: "Changes saved!",
-                  text: "Task has been updated successfully",
-                  icon: "success",
-                  timer: 1500,
-                  timerProgressBar: true,
-                  showConfirmButton: false
-                }).then(() => {
-                  loadCards(boardId);
-                });
-              })
-              .catch(() => {
-                Swal.fire('Error', 'Could not update task', 'error');
-              });
-            } else if (result.isDenied) {
-              fetch(`http://localhost:5000/api/cards/${card._id}/archive`, {
-                method: "PUT",
-                headers: {
-                  "Authorization": `Bearer ${localStorage.getItem("token")}`
-                }
-              })
-              .then(response => {
-                if (!response.ok) throw new Error('Error archiving');
-                return response.json();
-              })
-              .then(() => {
-                Swal.fire({
-                  title: 'Task archived!',
-                  text: 'Task has been archived successfully',
-                  icon: "success",
-                  timer: 1500,
-                  timerProgressBar: true,
-                  showConfirmButton: false
-                }).then(() => {
-                  loadCards(boardId);
-                });
-              })
-              .catch(() => {
-                Swal.fire('Error', 'Could not archive task', 'error');
-              });
-            } else if (result.dismiss === Swal.DismissReason.cancel) {
-              Swal.fire({
-                title: 'Are you sure?',
-                text: "You won't be able to revert this!",
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#dc3545',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: 'Yes, delete it!',
-                cancelButtonText: 'Cancel'
-              }).then((confirmResult) => {
-                if (confirmResult.isConfirmed) {
-                  fetch(`http://localhost:5000/api/cards/${card._id}`, {
-                    method: "DELETE",
+                const selectedLabels = document.getElementById('selected-labels').value.split(',').filter(Boolean);
+                //envio de arc al backend
+                const fileInput = document.getElementById('file-input');
+                const files = fileInput.files;
+                if (files.length > 0) {
+                  const formData = new FormData();
+                  for (let file of files) {
+                    formData.append('files', file);
+                  }
+
+                  if (card.attachments && card.attachments.length > 0) {
+                    const attachmentList = document.createElement("ul");
+                    card.attachments.forEach(att => {
+                      const li = document.createElement("li");
+                      li.innerHTML = `<a href="${att.url}" target="_blank" download>${att.filename}</a>`;
+                      attachmentList.appendChild(li);
+                    });
+                    contentDiv.appendChild(attachmentList);
+                  }
+
+                  return fetch(`http://localhost:5000/api/cards/${card._id}/attachments`, {
+                    method: 'POST',
                     headers: {
-                      "Authorization": `Bearer ${localStorage.getItem("token")}`
-                    }
+                      'Authorization': `Bearer ${localStorage.getItem("token")}`
+                    },
+                    body: formData
                   })
+                    .then(res => res.json())
+                    .then(attachments => {
+                      return { attachments };
+                    });
+                }
+
+                return {
+                  title: document.getElementById('swal-input-title').value,
+                  responsible: selectedResponsibles,
+                  description: document.getElementById('swal-input-description').value,
+                  checklist: checklistItems,
+                  labels: selectedLabels
+                };
+              }
+            }).then((result) => {
+              if (result.isConfirmed) {
+                fetch(`http://localhost:5000/api/cards/${card._id}`, {
+                  method: "PUT",
+                  headers: {
+                    "Content-Type": "application/json",
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  },
+                  body: JSON.stringify(result.value)
+                })
                   .then(response => {
-                    if (!response.ok) throw new Error('Error deleting');
-                    
+                    if (!response.ok) throw new Error('Error updating');
+
                     Swal.fire({
-                      title: 'Deleted!',
-                      text: 'Task has been deleted',
-                      icon: 'success',
+                      title: "Changes saved!",
+                      text: "Task has been updated successfully",
+                      icon: "success",
                       timer: 1500,
                       timerProgressBar: true,
                       showConfirmButton: false
@@ -1060,17 +1046,78 @@ function Board() {
                     });
                   })
                   .catch(() => {
-                    Swal.fire('Error', 'Could not delete task', 'error');
+                    Swal.fire('Error', 'Could not update task', 'error');
                   });
-                }
-              });
-            }
+              } else if (result.isDenied) {
+                fetch(`http://localhost:5000/api/cards/${card._id}/archive`, {
+                  method: "PUT",
+                  headers: {
+                    "Authorization": `Bearer ${localStorage.getItem("token")}`
+                  }
+                })
+                  .then(response => {
+                    if (!response.ok) throw new Error('Error archiving');
+                    return response.json();
+                  })
+                  .then(() => {
+                    Swal.fire({
+                      title: 'Task archived!',
+                      text: 'Task has been archived successfully',
+                      icon: "success",
+                      timer: 1500,
+                      timerProgressBar: true,
+                      showConfirmButton: false
+                    }).then(() => {
+                      loadCards(boardId);
+                    });
+                  })
+                  .catch(() => {
+                    Swal.fire('Error', 'Could not archive task', 'error');
+                  });
+              } else if (result.dismiss === Swal.DismissReason.cancel) {
+                Swal.fire({
+                  title: 'Are you sure?',
+                  text: "You won't be able to revert this!",
+                  icon: 'warning',
+                  showCancelButton: true,
+                  confirmButtonColor: '#dc3545',
+                  cancelButtonColor: '#6c757d',
+                  confirmButtonText: 'Yes, delete it!',
+                  cancelButtonText: 'Cancel'
+                }).then((confirmResult) => {
+                  if (confirmResult.isConfirmed) {
+                    fetch(`http://localhost:5000/api/cards/${card._id}`, {
+                      method: "DELETE",
+                      headers: {
+                        "Authorization": `Bearer ${localStorage.getItem("token")}`
+                      }
+                    })
+                      .then(response => {
+                        if (!response.ok) throw new Error('Error deleting');
+
+                        Swal.fire({
+                          title: 'Deleted!',
+                          text: 'Task has been deleted',
+                          icon: 'success',
+                          timer: 1500,
+                          timerProgressBar: true,
+                          showConfirmButton: false
+                        }).then(() => {
+                          loadCards(boardId);
+                        });
+                      })
+                      .catch(() => {
+                        Swal.fire('Error', 'Could not delete task', 'error');
+                      });
+                  }
+                });
+              }
+            });
+          })
+          .catch(error => {
+            console.error("Error getting contributors:", error);
+            Swal.fire('Error', 'Could not load contributors', 'error');
           });
-        })
-        .catch(error => {
-          console.error("Error getting contributors:", error);
-          Swal.fire('Error', 'Could not load contributors', 'error');
-        });
       });
     } else if (card.archived) {
       contentDiv.addEventListener("click", () => {
@@ -1126,32 +1173,32 @@ function Board() {
             }).then((confirmResult) => {
               if (confirmResult.isConfirmed) {
                 const boardId = window.location.pathname.split("/board/")[1];
-                
+
                 fetch(`http://localhost:5000/api/cards/${card._id}/unarchive`, {
                   method: "PUT",
                   headers: {
                     "Authorization": `Bearer ${localStorage.getItem("token")}`
                   }
                 })
-                .then(response => {
-                  if (!response.ok) throw new Error('Error unarchiving');
-                  return response.json();
-                })
-                .then(() => {
-                  Swal.fire({
-                    title: 'Unarchived!',
-                    text: 'The card has been unarchived successfully',
-                    icon: 'success',
-                    timer: 1500,
-                    timerProgressBar: true,
-                    showConfirmButton: false
-                  }).then(() => {
-                    loadCards(boardId);
+                  .then(response => {
+                    if (!response.ok) throw new Error('Error unarchiving');
+                    return response.json();
+                  })
+                  .then(() => {
+                    Swal.fire({
+                      title: 'Unarchived!',
+                      text: 'The card has been unarchived successfully',
+                      icon: 'success',
+                      timer: 1500,
+                      timerProgressBar: true,
+                      showConfirmButton: false
+                    }).then(() => {
+                      loadCards(boardId);
+                    });
+                  })
+                  .catch(() => {
+                    Swal.fire('Error', 'Could not unarchive the card', 'error');
                   });
-                })
-                .catch(() => {
-                  Swal.fire('Error', 'Could not unarchive the card', 'error');
-                });
               }
             });
           }
