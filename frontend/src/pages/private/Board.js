@@ -12,13 +12,13 @@ function Board() {
 
   // Definir los colores disponibles para las etiquetas
   const labelColors = {
-    red: { color: '#ff4444', name: 'Alta Prioridad' },
-    orange: { color: '#ffbb33', name: 'Media Prioridad' },
-    green: { color: '#00C851', name: 'Baja Prioridad' },
+    red: { color: '#ff4444', name: 'High Priority' },
+    orange: { color: '#ffbb33', name: 'Medium Priority' },
+    green: { color: '#00C851', name: 'Low Priority' },
     blue: { color: '#33b5e5', name: 'Bug' },
-    purple: { color: '#aa66cc', name: 'Mejora' },
-    yellow: { color: '#ffeb3b', name: 'Documentación' },
-    pink: { color: '#ff4081', name: 'Diseño' },
+    purple: { color: '#aa66cc', name: 'Enhancement' },
+    yellow: { color: '#ffeb3b', name: 'Documentation' },
+    pink: { color: '#ff4081', name: 'Design' },
     teal: { color: '#009688', name: 'Testing' }
   };
 
