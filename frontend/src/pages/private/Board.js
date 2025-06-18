@@ -308,7 +308,8 @@ function Board() {
         checklist: originalCard.checklist,
         labels: originalCard.labels,
         column: originalCard.column,
-        boardId: boardId
+        boardId: boardId,
+        attachments: originalCard.attachments
       })
     })
       .then(res => {

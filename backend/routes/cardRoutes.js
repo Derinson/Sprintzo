@@ -2,10 +2,12 @@ const express = require('express');
 const router = express.Router();
 const Card = require('../models/Card');
 const authenticateToken = require("../middleware/authenticateToken");
+const fs = require('fs');
+const path = require('path');
 
 // Crear una nueva tarjeta vinculada a un tablero
 router.post('/', async (req, res) => {
-    const { title, responsible, description, column, boardId, checklist, labels } = req.body;
+    const { title, responsible, description, column, boardId, checklist, labels, attachments } = req.body;
 
     try {
         if (!boardId) {
@@ -31,7 +33,8 @@ router.post('/', async (req, res) => {
             column,
             boardId,
             checklist: checklist || [],
-            labels: labels || []
+            labels: labels || [],
+            attachments: attachments || []
         });
         await newCard.save();
         res.status(201).json({ message: "Tarjeta creada exitosamente", card: newCard });
@@ -78,7 +81,7 @@ router.get('/:id', async (req, res) => {
 
 // Actualizar una tarjeta
 router.put('/:id', async (req, res) => {
-    const { title, responsible, description, column, checklist, labels } = req.body;
+    const { title, responsible, description, column, boardId, checklist, labels, attachments } = req.body;
     try {
         if (responsible && !Array.isArray(responsible)) {
             return res.status(400).json({ error: "El campo responsible debe ser un array" });
@@ -167,6 +170,25 @@ router.post('/duplicate/:id', async (req, res) => {
         }
 
         // Crear una nueva tarjeta con los mismos datos
+        // Copiar físicamente los adjuntos
+        const newAttachments = [];
+
+        for (const attachment of originalCard.attachments) {
+            const oldFilePath = path.join(__dirname, '..', 'uploads', path.basename(attachment.url));
+            const fileExtension = path.extname(oldFilePath);
+            const newFileName = `${Date.now()}-${Math.random().toString(36).substring(2)}${fileExtension}`;
+            const newFilePath = path.join(__dirname, '..', 'uploads', newFileName);
+
+            // Copiar archivo
+            fs.copyFileSync(oldFilePath, newFilePath);
+
+            // Crear nuevo objeto adjunto
+            newAttachments.push({
+                filename: attachment.filename,
+                url: `http://localhost:5000/uploads/${newFileName}`
+            });
+        }
+
         const duplicatedCard = new Card({
             title: originalCard.title + " (Copy)",
             responsible: originalCard.responsible,
@@ -174,7 +196,8 @@ router.post('/duplicate/:id', async (req, res) => {
             column: originalCard.column,
             boardId: originalCard.boardId,
             checklist: originalCard.checklist || [],
-            labels: originalCard.labels || []
+            labels: originalCard.labels || [],
+            attachments: newAttachments
         });
 
         await duplicatedCard.save();
@@ -188,7 +211,6 @@ router.post('/duplicate/:id', async (req, res) => {
 
 // Adjuntar archivos
 const multer = require('multer');
-const path = require('path');
 
 const storage = multer.diskStorage({
     destination: (req, file, cb) => {
